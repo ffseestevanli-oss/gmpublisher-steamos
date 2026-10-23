@@ -240,6 +240,12 @@ impl AppData {
 					return Some(path);
 				}
 				None => {
+					#[cfg(target_os = "linux")]
+					if let Some(path) = locate_gmod_linux() {
+						println!("Located!");
+						return Some(path);
+					}
+
 					println!("Failed to parse Steam library folders. Waiting for Steam...");
 					for i in 0..3_u8 {
 						sleep!(1);
@@ -363,6 +369,54 @@ pub fn update_settings(mut settings: Settings) -> bool {
 	webview_emit!("UpdateAppData", &*crate::APP_DATA);
 
 	true
+}
+
+/// steamlocate only checks one Steam root (and prefers Flatpak Steam if its directory merely exists),
+/// so on Linux we also scan every known Steam root and all of their library folders.
+/// This covers native Steam (SteamOS, Bazzite, most distros), Flatpak Steam, Snap Steam and
+/// libraries on SD cards / external drives (e.g. /run/media/mmcblk0p1 on the Steam Deck).
+#[cfg(target_os = "linux")]
+fn locate_gmod_linux() -> Option<PathBuf> {
+	let home = dirs_next::home_dir()?;
+	let steam_roots = [
+		home.join(".steam/steam"),
+		home.join(".steam/root"),
+		home.join(".local/share/Steam"),
+		home.join(".var/app/com.valvesoftware.Steam/.steam/steam"),
+		home.join(".var/app/com.valvesoftware.Steam/.local/share/Steam"),
+		home.join(".var/app/com.valvesoftware.Steam/data/Steam"),
+		home.join("snap/steam/common/.steam/steam"),
+		home.join("snap/steam/common/.local/share/Steam"),
+	];
+
+	let path_regex = regex::Regex::new(r#"(?m)^\s*"path"\s+"(.+?)"\s*$"#).unwrap();
+
+	let mut libraries: Vec<PathBuf> = Vec::new();
+	let mut add_library = |path: PathBuf| {
+		let path = dunce::canonicalize(&path).unwrap_or(path);
+		if !libraries.contains(&path) {
+			libraries.push(path);
+		}
+	};
+
+	for root in steam_roots.iter().filter(|root| root.is_dir()) {
+		add_library(root.to_owned());
+
+		if let Ok(vdf) = fs::read_to_string(root.join("steamapps/libraryfolders.vdf")) {
+			for path in path_regex.captures_iter(&vdf) {
+				add_library(PathBuf::from(path[1].replace("\\\\", "\\")));
+			}
+		}
+	}
+
+	libraries.into_iter().find_map(|library| {
+		let gmod = library.join("steamapps/common/GarrysMod");
+		if validate_gmod(gmod.clone()) {
+			Some(gmod)
+		} else {
+			None
+		}
+	})
 }
 
 #[tauri::command]

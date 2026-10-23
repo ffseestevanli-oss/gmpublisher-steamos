@@ -76,6 +76,11 @@ fn main() {
 	// https://github.com/WilliamVenner/gmpublisher/issues/210
 	if cfg!(target_os = "linux") {
 		std::env::set_var("WEBKIT_DISABLE_COMPOSITING_MODE", "1");
+
+		// Newer WebKitGTK shows a blank window on many Wayland / NVIDIA setups (Bazzite, SteamOS desktop mode)
+		if std::env::var_os("WEBKIT_DISABLE_DMABUF_RENDERER").is_none() {
+			std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+		}
 	}
 
 	std::panic::set_hook(Box::new(logging::panic));

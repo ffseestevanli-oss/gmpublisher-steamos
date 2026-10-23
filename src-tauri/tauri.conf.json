@@ -13,7 +13,7 @@
 	"tauri": {
 		"bundle": {
 			"active": true,
-			"targets": ["msi", "app"],
+			"targets": ["msi", "app", "appimage"],
 			"identifier": "venner.gmpublisher",
 			"icon": [
 				"icons/32x32.png",
