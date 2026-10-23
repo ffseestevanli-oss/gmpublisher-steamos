@@ -74,6 +74,24 @@ jobs:
 
           mv "$APPIMAGE" "$GITHUB_WORKSPACE/gmpublisher_linux_x86_64.AppImage"
 
+      - name: GUI smoke test (debug)
+        continue-on-error: true
+        run: |
+          DEBIAN_FRONTEND=noninteractive apt-get install -y xvfb imagemagick dbus-x11 xauth > /dev/null
+          cd "$GITHUB_WORKSPACE"
+          export RUST_BACKTRACE=1 G_MESSAGES_DEBUG=all
+          xvfb-run -a -s "-screen 0 1280x800x24" sh -c '
+            dbus-launch --exit-with-session ./gmpublisher_linux_x86_64.AppImage --appimage-extract-and-run > app.log 2>&1 &
+            sleep 30
+            import -window root shot.png
+            ps aux | grep -i -E "webkit|gmpublisher" | grep -v grep
+            kill $! || true
+          '
+          echo "===== app log ====="; grep -v -E "^\(gmpublisher:[0-9]+\): (GLib-GIO|Gtk|GLib|Gdk)-DEBUG" app.log | head -200
+          echo "===== screenshot ====="
+          convert shot.png -format "%k unique colours\n" info:
+          convert shot.png -resize 160x100 -colors 32 png:- | base64 -w0; echo
+
       - uses: actions/upload-artifact@v4
         with:
           name: gmpublisher_linux_x86_64.AppImage
