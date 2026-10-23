@@ -10,13 +10,54 @@ Download the available builds from this fork's **[Releases](../../releases)** pa
 
 For the original application, visit the [upstream gmpublisher repository](https://github.com/WilliamVenner/gmpublisher).
 
-### SteamOS & Linux
+### SteamOS, Bazzite & other Linux
 
-- Download a compatible build from the releases page.
-- Follow any installation instructions included with the release.
-- Additional system dependencies may be required, depending on your distribution and environment.
+Switch to **Desktop Mode** on the Steam Deck, open a terminal (Konsole) and run:
 
-Compatibility may vary between Linux distributions and SteamOS versions.
+```sh
+curl -fsSL https://raw.githubusercontent.com/ffseestevanli-oss/gmpublisher-steamos/master/scripts/install-steamos.sh | bash
+```
+
+This puts `gmpublisher.AppImage` in `~/Applications` and adds it to your app menu. No `sudo`, no `steamos-readonly disable`. Run the same command to update, or use `| bash -s -- --uninstall` to remove it.
+
+**Manual install:** download `gmpublisher_linux_x86_64.AppImage` from the [releases page](../../releases), then:
+
+```sh
+chmod +x gmpublisher_linux_x86_64.AppImage
+./gmpublisher_linux_x86_64.AppImage
+```
+
+On Bazzite you can also open the AppImage with **Gear Lever** to add it to your menu.
+
+#### Things to know
+
+- **Steam must be running** and logged in. gmpublisher talks to Steam through the Steamworks API.
+- Use it in **Desktop Mode**; it isn't designed for Game Mode.
+- If Garry's Mod isn't found automatically, set its folder in gmpublisher's settings (the folder that contains `GarrysMod/addons`).
+- **Flatpak Steam:** finding Garry's Mod works, but connecting to a sandboxed Flatpak Steam client may not. SteamOS and Bazzite use native Steam.
+- If the AppImage won't start with a FUSE error, run it with `--appimage-extract-and-run`.
+
+## 🐧 What this fork changes
+
+On SteamOS and Bazzite the system is read-only, so the WebKitGTK libraries the upstream Linux ZIP expects can't be installed. This fork:
+
+- **Ships a self-contained AppImage** with WebKitGTK and `libsteam_api.so` bundled.
+- **Finds Garry's Mod in more places:** native Steam (`~/.steam`, `~/.local/share/Steam`), Flatpak Steam, Snap Steam, and every library folder, including SD cards and external drives such as `/run/media/mmcblk0p1` on the Steam Deck.
+- **Loads `libsteam_api.so` from next to the executable**, not the current working directory, so it runs from any folder or launcher.
+- **Avoids the blank-window WebKit bug** on Wayland / NVIDIA by setting `WEBKIT_DISABLE_DMABUF_RENDERER=1` unless you've set it yourself.
+
+### Building from source
+
+The AppImage is built by [`.github/workflows/linux-appimage.yml`](.github/workflows/linux-appimage.yml) in an Ubuntu 22.04 container (Tauri 1 needs `webkit2gtk-4.0`). Every push builds one (download it from the workflow run's artifacts), and pushing a version tag (e.g. `2.12.2-steamos.1`) attaches it to a GitHub release.
+
+To build locally on an immutable distro, use a Distrobox/Toolbox Ubuntu 22.04 container:
+
+```sh
+sudo apt install build-essential curl wget file libwebkit2gtk-4.0-dev libgtk-3-dev \
+  libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf
+npm install
+LD_LIBRARY_PATH="$PWD/src-tauri/target/release" npm run tauri build -- --bundles appimage
+```
 
 ## ✨ Features
 

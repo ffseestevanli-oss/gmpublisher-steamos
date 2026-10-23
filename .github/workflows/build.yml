@@ -113,6 +113,8 @@ jobs:
         fail_on_unmatched_files: true
 
   aur_publish:
+    # Only the upstream repository has the AUR credentials
+    if: github.repository == 'WilliamVenner/gmpublisher'
     runs-on: ubuntu-latest
     needs: build_linux
     container: archlinux:base-devel
