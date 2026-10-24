@@ -75,7 +75,7 @@ jobs:
             install: pacman -Syu --noconfirm --quiet qt6-declarative kirigami qqc2-desktop-style mesa git xorg-server-xvfb xorg-xauth imagemagick noto-fonts which > /dev/null
     container: ${{ matrix.image }}
     permissions:
-      contents: write
+      contents: read
     steps:
       - name: Install the desktop's Qt and Kirigami
         run: ${{ matrix.install }}
@@ -135,12 +135,3 @@ jobs:
         with:
           name: screenshot-${{ matrix.distro }}
           path: results
-
-      - name: Publish screenshot (temporary, for remote debugging)
-        if: always()
-        run: |
-          cd results
-          git init -q -b debug-native-${{ matrix.distro }}
-          git config user.name ci; git config user.email ci@localhost
-          git add -A; git commit -qm "Native smoke test for ${GITHUB_SHA}"
-          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" debug-native-${{ matrix.distro }}
