@@ -10,24 +10,19 @@ Download the available builds from this fork's **[Releases](../../releases)** pa
 
 For the original application, visit the [upstream gmpublisher repository](https://github.com/WilliamVenner/gmpublisher).
 
-### SteamOS, Bazzite & other Linux
+### SteamOS, Bazzite & other Linux (recommended: Distrobox)
 
 Switch to **Desktop Mode** on the Steam Deck, open a terminal (Konsole) and run:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/ffseestevanli-oss/gmpublisher-steamos/master/scripts/install-steamos.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ffseestevanli-oss/gmpublisher-steamos/master/scripts/install-distrobox.sh | bash
 ```
 
-This puts `gmpublisher.AppImage` in `~/Applications` and adds it to your app menu. No `sudo`, no `steamos-readonly disable`. Run the same command to update, or use `| bash -s -- --uninstall` to remove it.
+This creates a small Ubuntu 22.04 [Distrobox](https://distrobox.it) container (Distrobox comes preinstalled on Bazzite and SteamOS 3.5+), installs gmpublisher into your home folder, and adds it to your app menu. No `sudo`, no `steamos-readonly disable`. Run the same command to update, or add `-s -- --uninstall` after `bash` to remove it.
 
-**Manual install:** download `gmpublisher_linux_x86_64.AppImage` from the [releases page](../../releases), then:
+Why a container? gmpublisher is built on Tauri 1, which needs WebKitGTK 4.0. Modern systems no longer ship it, and bundling it (as the AppImage does) clashes with newer graphics drivers. That shows up as a blank window or missing text. Inside the container, every library matches.
 
-```sh
-chmod +x gmpublisher_linux_x86_64.AppImage
-./gmpublisher_linux_x86_64.AppImage
-```
-
-On Bazzite you can also open the AppImage with **Gear Lever** to add it to your menu.
+**AppImage (experimental):** `gmpublisher_linux_x86_64.AppImage` is also on the [releases page](../../releases). It works on some systems, but on Bazzite it can show a blank window. If it does, use the Distrobox installer above.
 
 #### Things to know
 
@@ -36,12 +31,13 @@ On Bazzite you can also open the AppImage with **Gear Lever** to add it to your 
 - If Garry's Mod isn't found automatically, set its folder in gmpublisher's settings (the folder that contains `GarrysMod/addons`).
 - **Flatpak Steam:** finding Garry's Mod works, but connecting to a sandboxed Flatpak Steam client may not. SteamOS and Bazzite use native Steam.
 - If the AppImage won't start with a FUSE error, run it with `--appimage-extract-and-run`.
+- If you see nothing at all after launching the Distrobox install, run `~/.local/bin/gmpublisher` in a terminal to see its output.
 
 ## 🐧 What this fork changes
 
 On SteamOS and Bazzite the system is read-only, so the WebKitGTK libraries the upstream Linux ZIP expects can't be installed. This fork:
 
-- **Ships a self-contained AppImage** with WebKitGTK and `libsteam_api.so` bundled.
+- **Ships a Distrobox installer** that runs gmpublisher in a matching Ubuntu 22.04 container, plus an experimental self-contained AppImage.
 - **Finds Garry's Mod in more places:** native Steam (`~/.steam`, `~/.local/share/Steam`), Flatpak Steam, Snap Steam, and every library folder, including SD cards and external drives such as `/run/media/mmcblk0p1` on the Steam Deck.
 - **Loads `libsteam_api.so` from next to the executable**, not the current working directory, so it runs from any folder or launcher.
 - **Avoids the blank-window WebKit bug** on Wayland / NVIDIA by setting `WEBKIT_DISABLE_DMABUF_RENDERER=1` unless you've set it yourself.

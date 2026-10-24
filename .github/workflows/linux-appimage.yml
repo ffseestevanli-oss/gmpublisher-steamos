@@ -94,14 +94,63 @@ jobs:
 
           mv "$APPIMAGE" "$GITHUB_WORKSPACE/gmpublisher_linux_x86_64.AppImage"
 
+      - name: Package tarball for the Distrobox installer
+        run: |
+          mkdir -p pkg
+          cp src-tauri/target/release/gmpublisher src-tauri/target/release/libsteam_api.so pkg/
+          cp src-tauri/icons/128x128.png pkg/gmpublisher.png
+          tar -czf gmpublisher_linux_x86_64.tar.gz -C pkg .
+          tar -tzf gmpublisher_linux_x86_64.tar.gz
+
       - uses: actions/upload-artifact@v4
         with:
           name: gmpublisher_linux_x86_64.AppImage
           path: gmpublisher_linux_x86_64.AppImage
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gmpublisher_linux_x86_64.tar.gz
+          path: gmpublisher_linux_x86_64.tar.gz
+
       - name: Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: gmpublisher_linux_x86_64.AppImage
+          files: |
+            gmpublisher_linux_x86_64.AppImage
+            gmpublisher_linux_x86_64.tar.gz
           fail_on_unmatched_files: true
+
+  distrobox:
+    # Install through scripts/install-distrobox.sh exactly as a user would, then launch the app on a virtual display
+    needs: appimage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gmpublisher_linux_x86_64.tar.gz
+
+      - name: Install podman, distrobox and a virtual display
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq podman xvfb imagemagick xdotool > /dev/null
+          curl -fsSL https://raw.githubusercontent.com/89luca89/distrobox/1.8.1.2/install | sh -s -- --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run the installer
+        run: GMPUBLISHER_TARBALL="$PWD/gmpublisher_linux_x86_64.tar.gz" bash scripts/install-distrobox.sh
+
+      - name: Launch
+        run: |
+          ~/.local/bin/gmpublisher --version
+          xvfb-run -a -s "-screen 0 1280x800x24" sh -c '
+            ~/.local/bin/gmpublisher > app.log 2>&1 &
+            APP=$!
+            sleep 45; import -window root shot.png
+            kill $APP || true'
+          grep -v -E '^\s+"|S_API|dlopen|steamclient|with error|^\]|whitelist' app.log | head -40
+          COLOURS=$(convert shot.png -format '%k' info:)
+          echo "Screenshot has $COLOURS colours"
+          test "$COLOURS" -gt 100 || { echo "The window did not render"; exit 1; }
