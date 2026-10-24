@@ -4,7 +4,7 @@ set -u
 APPIMAGE="$1"
 chmod +x "$APPIMAGE"
 "$APPIMAGE" --appimage-extract >/dev/null
-mkdir -p off
+mkdir -p off results
 
 run() {
 	local name="$1" backend="$2"
@@ -25,13 +25,13 @@ run() {
 		pkill -f squashfs-root/usr/bin/gmpublisher; kill $wpid; sleep 1
 		grep -i -E "error|egl|fail" weston.log | head -5
 	fi
-	grep -v -E '^\s+"|Steam|S_API|dlopen|steamclient|with error|^\]|whitelist' app.log | head -30
+	grep -v -E '^\s+"|Steam|S_API|dlopen|steamclient|with error|^\]|whitelist' app.log | head -30 | tee "results/$backend-$name.log"
 	echo "::endgroup::"
 	if [ -f shot.png ]; then
-		echo "RESULT $name $backend: $(convert shot.png -format '%k' info:) colours"
-		echo "THUMB $name $backend $(convert shot.png -resize 400x250 -colors 64 png:- | base64 -w0)"
+		echo "$backend $name: $(convert shot.png -format '%k' info:) colours" | tee -a results/summary.txt
+		convert shot.png -resize 640x400 "results/$backend-$name.png"
 	else
-		echo "RESULT $name $backend: no screenshot"
+		echo "$backend $name: no screenshot" | tee -a results/summary.txt
 	fi
 }
 

@@ -110,11 +110,13 @@ jobs:
     needs: appimage
     runs-on: ubuntu-latest
     container: fedora:latest
+    permissions:
+      contents: write
     steps:
       - name: Install Fedora desktop libraries
         run: |
           dnf install -y -q gtk3 mesa-dri-drivers mesa-libEGL mesa-libGL xorg-x11-server-Xvfb xorg-x11-xauth \
-            ImageMagick dbus-x11 procps-ng weston which glibc-langpack-en fontconfig google-noto-sans-fonts > /dev/null
+            ImageMagick dbus-x11 procps-ng weston which glibc-langpack-en fontconfig google-noto-sans-fonts git > /dev/null
           cat /etc/os-release | head -2
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
@@ -122,3 +124,11 @@ jobs:
           name: gmpublisher_linux_x86_64.AppImage
       - name: Render tests
         run: bash .github/debug/fedora-smoke.sh "$PWD/gmpublisher_linux_x86_64.AppImage"
+      - name: Publish results to the debug-results branch
+        if: always()
+        run: |
+          cd results
+          git init -q -b debug-results
+          git config user.name ci; git config user.email ci@localhost
+          git add -A; git commit -qm "Render results for ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" debug-results
