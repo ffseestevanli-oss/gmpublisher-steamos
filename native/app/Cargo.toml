@@ -1,0 +1,19 @@
+[package]
+name = "gmpublisher"
+version = "3.0.0-alpha.0"
+description = "Garry's Mod Workshop publishing utility (native Qt edition)"
+authors = ["William Venner <william@venner.io>"]
+license = "GPL-3.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+cxx = "1"
+cxx-qt = "0.7"
+cxx-qt-lib = { version = "0.7", features = ["qt_full"] }
+steamworks = "0.11"
+regex = "1"
+dirs = "5"
+
+[build-dependencies]
+cxx-qt-build = { version = "0.7", features = ["link_qt_object_files"] }
