@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=gmpublisher
+Comment=Garry's Mod Workshop publishing utility
+Exec=gmpublisher
+Icon=io.github.ffseestevanli_oss.gmpublisher
+Type=Application
+Categories=Utility;Game;Qt;KDE;
+Terminal=false
