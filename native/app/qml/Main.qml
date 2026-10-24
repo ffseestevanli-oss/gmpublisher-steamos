@@ -33,8 +33,9 @@ Kirigami.ApplicationWindow {
 				Controls.Label {
 					Kirigami.FormData.label: "Steam:"
 					text: backend.steamStatus
-					Layout.fillWidth: true
+					Layout.maximumWidth: Kirigami.Units.gridUnit * 20
 					wrapMode: Text.Wrap
+					onWidthChanged: console.log("steam status label", width, "x", height, JSON.stringify(text))
 				}
 				Controls.Label {
 					Kirigami.FormData.label: "Signed in as:"
