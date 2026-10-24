@@ -116,7 +116,7 @@ jobs:
       - name: Install Fedora desktop libraries
         run: |
           dnf install -y -q gtk3 mesa-dri-drivers mesa-libEGL mesa-libGL xorg-x11-server-Xvfb xorg-x11-xauth \
-            ImageMagick dbus-x11 procps-ng weston which glibc-langpack-en fontconfig google-noto-sans-fonts git > /dev/null
+            ImageMagick xdotool harfbuzz-icu pango cairo woff2 libthai libxslt dbus-x11 procps-ng weston which glibc-langpack-en fontconfig google-noto-sans-fonts git > /dev/null
           cat /etc/os-release | head -2
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
