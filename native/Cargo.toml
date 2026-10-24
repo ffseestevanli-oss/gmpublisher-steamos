@@ -1,5 +1,5 @@
 [workspace]
-members = ["app"]
+members = ["app", "core"]
 resolver = "2"
 
 [profile.release]

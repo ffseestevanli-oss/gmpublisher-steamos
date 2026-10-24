@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Service
+MimeType=application/x-gmod-addon;
+Actions=extract;
+X-KDE-Submenu=Garry's Mod addon
+
+[Desktop Action extract]
+Name=Extract here
+Icon=archive-extract
+Exec=gmpublisher extract %f

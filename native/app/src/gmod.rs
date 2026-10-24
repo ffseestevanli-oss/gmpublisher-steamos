@@ -1,4 +1,7 @@
-use std::{fs, path::PathBuf};
+use std::{
+	fs,
+	path::{Path, PathBuf},
+};
 
 /// Every place a Linux Steam install keeps its root, native first, then Flatpak and Snap.
 fn steam_roots() -> Vec<PathBuf> {
@@ -43,8 +46,18 @@ pub fn steam_libraries() -> Vec<PathBuf> {
 	libraries
 }
 
-pub fn is_gmod_dir(path: &PathBuf) -> bool {
-	path.join("GarrysMod/addons").is_dir()
+/// The game's content folder inside the install: `garrysmod` on Linux, `GarrysMod` on older installs.
+pub fn content_dir(gmod_dir: &Path) -> Option<PathBuf> {
+	["garrysmod", "GarrysMod"].into_iter().map(|name| gmod_dir.join(name)).find(|dir| dir.join("addons").is_dir())
+}
+
+pub fn is_gmod_dir(path: &Path) -> bool {
+	content_dir(path).is_some()
+}
+
+/// Folders where Steam keeps downloaded Workshop items for Garry's Mod, one subfolder per item.
+pub fn workshop_dirs() -> Vec<PathBuf> {
+	steam_libraries().into_iter().map(|library| library.join("steamapps/workshop/content/4000")).filter(|dir| dir.is_dir()).collect()
 }
 
 /// Finds Garry's Mod without needing Steam to be running.
@@ -52,7 +65,7 @@ pub fn locate() -> Option<PathBuf> {
 	steam_libraries()
 		.into_iter()
 		.map(|library| library.join("steamapps/common/GarrysMod"))
-		.find(is_gmod_dir)
+		.find(|dir| is_gmod_dir(dir))
 }
 
 #[cfg(test)]
@@ -65,7 +78,7 @@ mod tests {
 		let steam = home.join(".local/share/Steam");
 		let sd = home.join("sd");
 		fs::create_dir_all(steam.join("steamapps")).unwrap();
-		fs::create_dir_all(sd.join("steamapps/common/GarrysMod/GarrysMod/addons")).unwrap();
+		fs::create_dir_all(sd.join("steamapps/common/GarrysMod/garrysmod/addons")).unwrap();
 		// An empty Flatpak Steam directory must not hide the native install
 		fs::create_dir_all(home.join(".var/app/com.valvesoftware.Steam/.steam/steam")).unwrap();
 		fs::write(
