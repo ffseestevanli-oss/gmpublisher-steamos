@@ -42,7 +42,7 @@ jobs:
       - name: Package
         run: |
           mkdir -p dist/gmpublisher
-          cp target/release/gmpublisher packaging/install.sh packaging/io.github.ffseestevanli_oss.gmpublisher.* packaging/gmpublisher-servicemenu.desktop dist/gmpublisher/
+          cp target/release/gmpublisher packaging/install.sh packaging/io.github.ffseestevanli_oss.gmpublisher.* packaging/gmpublisher-servicemenu.desktop packaging/gmpublisher-folder-servicemenu.desktop dist/gmpublisher/
           cp "$(find target/release -name libsteam_api.so | head -1)" dist/gmpublisher/
           tar -czf gmpublisher_native_linux_x86_64.tar.gz -C dist gmpublisher
           tar -tzvf gmpublisher_native_linux_x86_64.tar.gz
@@ -128,10 +128,10 @@ jobs:
           }
           shoot installed
           shoot gma "$PWD/fixture/myaddon.gma"
+          shoot project "$PWD/fixture/myaddon"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshot-${{ matrix.distro }}
           path: results
-

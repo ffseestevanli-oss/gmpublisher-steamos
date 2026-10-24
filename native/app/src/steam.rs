@@ -1,8 +1,21 @@
-use std::{path::PathBuf, thread, time::Duration};
+use std::{
+	path::PathBuf,
+	sync::OnceLock,
+	thread,
+	time::Duration,
+};
 
 use steamworks::{AppId, Client};
 
 pub const GMOD_APP_ID: AppId = AppId(4000);
+
+static CLIENT: OnceLock<Client> = OnceLock::new();
+
+/// The Steam client, once connected. Its callbacks are pumped by the thread `connect` starts, so
+/// other threads can make calls and wait for the results.
+pub fn client() -> Option<Client> {
+	CLIENT.get().cloned()
+}
 
 #[derive(Debug)]
 pub struct SteamInfo {
@@ -26,6 +39,7 @@ pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce
 			}
 		};
 
+		let _ = CLIENT.set(client.clone());
 		let gmod_dir = PathBuf::from(client.apps().app_install_dir(GMOD_APP_ID));
 		on_connected(SteamInfo {
 			persona: client.friends().name(),

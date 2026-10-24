@@ -16,6 +16,8 @@ ICON_FILE="$DATA_HOME/icons/hicolor/128x128/apps/$ID.png"
 MIME_FILE="$DATA_HOME/mime/packages/$ID.xml"
 # Dolphin's right-click "Extract here" for .gma files
 SERVICE_MENU="$DATA_HOME/kio/servicemenus/$ID.extract.desktop"
+# ...and "Open as Garry's Mod addon" for folders
+FOLDER_MENU="$DATA_HOME/kio/servicemenus/$ID.folder.desktop"
 
 refresh_caches() {
 	update-desktop-database "$DATA_HOME/applications" >/dev/null 2>&1 || true
@@ -23,7 +25,7 @@ refresh_caches() {
 }
 
 if [ "${1:-}" = "--uninstall" ]; then
-	rm -rf "$INSTALL_DIR" "$BIN" "$DESKTOP_FILE" "$ICON_FILE" "$MIME_FILE" "$SERVICE_MENU"
+	rm -rf "$INSTALL_DIR" "$BIN" "$DESKTOP_FILE" "$ICON_FILE" "$MIME_FILE" "$SERVICE_MENU" "$FOLDER_MENU"
 	refresh_caches
 	echo "gmpublisher removed."
 	exit 0
@@ -46,9 +48,10 @@ sed "s|^Exec=gmpublisher|Exec=$INSTALL_DIR/gmpublisher|" "$HERE/$ID.desktop" > "
 install -m644 "$HERE/$ID.mime.xml" "$MIME_FILE"
 # Plasma 6 only runs service menus that are marked executable
 sed "s|^Exec=gmpublisher|Exec=$INSTALL_DIR/gmpublisher|" "$HERE/gmpublisher-servicemenu.desktop" > "$SERVICE_MENU"
-chmod 755 "$SERVICE_MENU"
+sed "s|^Exec=gmpublisher|Exec=$INSTALL_DIR/gmpublisher|" "$HERE/gmpublisher-folder-servicemenu.desktop" > "$FOLDER_MENU"
+chmod 755 "$SERVICE_MENU" "$FOLDER_MENU"
 refresh_caches
 
 echo "Installed. Launch gmpublisher from your application menu, or run: $BIN"
-echo ".gma files now open in gmpublisher, and Dolphin can extract them from the right-click menu."
+echo ".gma files now open in gmpublisher. In Dolphin, right-click a .gma to extract it, or a folder to open it as an addon."
 echo "Run 'gmpublisher --help' for the command-line tools."

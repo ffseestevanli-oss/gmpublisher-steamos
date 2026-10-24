@@ -19,6 +19,8 @@ fn main() {
 				"qml/ProjectsPage.qml",
 				"qml/ProjectPage.qml",
 				"qml/AboutPage.qml",
+				"qml/PublishDialog.qml",
+				"qml/MyWorkshopPage.qml",
 			],
 			..Default::default()
 		})

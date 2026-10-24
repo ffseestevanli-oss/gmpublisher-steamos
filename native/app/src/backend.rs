@@ -23,6 +23,11 @@ pub mod qobject {
 		#[qproperty(QString, projects_json)]
 		// A file to open as soon as the window is up, from the command line
 		#[qproperty(QString, open_at_start)]
+		#[qproperty(QString, open_folder_at_start)]
+		// JSON array of the user's published Workshop items (see workshop::MyItem)
+		#[qproperty(QString, my_items_json)]
+		#[qproperty(bool, loading_my_items)]
+		#[qproperty(QString, my_items_error)]
 		type Backend = super::BackendRust;
 
 		#[qinvokable]
@@ -36,6 +41,9 @@ pub mod qobject {
 
 		#[qinvokable]
 		fn remove_project(self: Pin<&mut Backend>, folder: &QString);
+
+		#[qinvokable]
+		fn refresh_my_items(self: Pin<&mut Backend>);
 	}
 
 	impl cxx_qt::Threading for Backend {}
@@ -47,7 +55,7 @@ use std::path::PathBuf;
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::QString;
 
-use crate::{gmod, library, settings, steam};
+use crate::{gmod, library, settings, steam, workshop};
 
 pub struct BackendRust {
 	steam_status: QString,
@@ -59,6 +67,10 @@ pub struct BackendRust {
 	scanning: bool,
 	projects_json: QString,
 	open_at_start: QString,
+	open_folder_at_start: QString,
+	my_items_json: QString,
+	loading_my_items: bool,
+	my_items_error: QString,
 	started: bool,
 }
 
@@ -74,6 +86,10 @@ impl Default for BackendRust {
 			scanning: false,
 			projects_json: QString::from(json(&settings::projects()).as_str()),
 			open_at_start: QString::from(crate::OPEN_AT_START.get().map(String::as_str).unwrap_or_default()),
+			open_folder_at_start: QString::from(crate::OPEN_FOLDER_AT_START.get().map(String::as_str).unwrap_or_default()),
+			my_items_json: QString::from("[]"),
+			loading_my_items: false,
+			my_items_error: QString::default(),
 			started: false,
 		}
 	}
@@ -146,6 +162,25 @@ impl qobject::Backend {
 		let folder = folder.to_string();
 		let projects = settings::projects().into_iter().filter(|p| *p != folder).collect();
 		self.save_projects(projects);
+	}
+
+	fn refresh_my_items(mut self: Pin<&mut Self>) {
+		if *self.loading_my_items() {
+			return;
+		}
+		self.as_mut().set_my_items_error(QString::default());
+		self.as_mut().set_loading_my_items(true);
+		let thread = self.qt_thread();
+		std::thread::spawn(move || {
+			let result = workshop::my_items();
+			let _ = thread.queue(move |mut backend| {
+				backend.as_mut().set_loading_my_items(false);
+				match result {
+					Ok(items) => backend.set_my_items_json(QString::from(json(&items).as_str())),
+					Err(err) => backend.set_my_items_error(QString::from(err.as_str())),
+				}
+			});
+		});
 	}
 
 	fn save_projects(self: Pin<&mut Self>, projects: Vec<String>) {

@@ -29,6 +29,16 @@ pub mod qobject {
 		// JSON arrays of the Workshop's addon types and tags
 		#[qproperty(QString, types_json)]
 		#[qproperty(QString, all_tags_json)]
+		// Workshop description, used when the item is first published
+		#[qproperty(QString, description)]
+		// The Workshop item this folder publishes to, empty for a new one
+		#[qproperty(QString, workshop_id)]
+		#[qproperty(bool, publishing)]
+		#[qproperty(QString, publish_status)]
+		// 0 to 1, or negative while the length of the step isn't known
+		#[qproperty(f64, publish_progress)]
+		#[qproperty(QString, published_id)]
+		#[qproperty(bool, needs_legal_agreement)]
 		type AddonProject = super::AddonProjectRust;
 
 		#[qinvokable]
@@ -46,6 +56,15 @@ pub mod qobject {
 
 		#[qinvokable]
 		fn default_output(self: &AddonProject) -> QString;
+
+		// Packs and uploads to the Workshop. visibility is public, friends, unlisted or private;
+		// an empty preview keeps the current image (or uses the default for a new item).
+		#[qinvokable]
+		fn publish(self: Pin<&mut AddonProject>, visibility: &QString, preview: &QString, change_note: &QString);
+
+		// Links this folder to an existing Workshop item, from its ID or URL. Empty unlinks it.
+		#[qinvokable]
+		fn link_workshop_item(self: Pin<&mut AddonProject>, id_or_url: &QString) -> bool;
 	}
 
 	impl cxx_qt::Threading for AddonProject {}
@@ -57,6 +76,8 @@ use std::path::PathBuf;
 use cxx_qt::Threading;
 use cxx_qt_lib::QString;
 use gmpublisher_core::{addon_json, pack, AddonJson};
+
+use crate::{settings, workshop};
 use serde_json::json;
 
 pub struct AddonProjectRust {
@@ -74,6 +95,13 @@ pub struct AddonProjectRust {
 	packed_to: QString,
 	types_json: QString,
 	all_tags_json: QString,
+	description: QString,
+	workshop_id: QString,
+	publishing: bool,
+	publish_status: QString,
+	publish_progress: f64,
+	published_id: QString,
+	needs_legal_agreement: bool,
 }
 
 impl Default for AddonProjectRust {
@@ -93,6 +121,13 @@ impl Default for AddonProjectRust {
 			packed_to: QString::default(),
 			types_json: QString::from(json!(addon_json::TYPES).to_string().as_str()),
 			all_tags_json: QString::from(json!(addon_json::TAGS).to_string().as_str()),
+			description: QString::default(),
+			workshop_id: QString::default(),
+			publishing: false,
+			publish_status: QString::default(),
+			publish_progress: 0.0,
+			published_id: QString::default(),
+			needs_legal_agreement: false,
 		}
 	}
 }
@@ -108,7 +143,7 @@ impl qobject::AddonProject {
 			addon_type: self.addon_type().to_string(),
 			tags: serde_json::from_str(&self.tags_json().to_string()).unwrap_or_default(),
 			ignore: self.ignore_text().to_string().lines().map(str::trim).filter(|l| !l.is_empty()).map(str::to_owned).collect(),
-			..Default::default()
+			description: self.description().to_string(),
 		}
 	}
 
@@ -133,15 +168,15 @@ impl qobject::AddonProject {
 		self.as_mut().set_title(QString::from(addon.title.as_str()));
 		self.as_mut().set_addon_type(QString::from(addon.addon_type.as_str()));
 		self.as_mut().set_tags_json(QString::from(json!(addon.tags).to_string().as_str()));
+		self.as_mut().set_description(QString::from(addon.description.as_str()));
+		let linked = settings::workshop_id(&folder.to_string()).map(|id| id.to_string()).unwrap_or_default();
+		self.as_mut().set_workshop_id(QString::from(linked.as_str()));
 		self.as_mut().set_ignore_text(QString::from(addon.ignore.join("\n").as_str()));
 		self.refresh();
 	}
 
 	fn save(mut self: Pin<&mut Self>) {
-		// Keep anything in addon.json this app doesn't edit, such as the Workshop description
-		let existing = AddonJson::load(self.folder_path()).ok().flatten().unwrap_or_default();
-		let addon = AddonJson { description: existing.description, ..self.current() };
-		match addon.save(self.folder_path()) {
+		match self.current().save(self.folder_path()) {
 			Ok(()) => {
 				self.as_mut().set_error(QString::default());
 				self.as_mut().set_has_addon_json(true);
@@ -212,6 +247,74 @@ impl qobject::AddonProject {
 				match result {
 					Ok(()) => project.set_packed_to(QString::from(out.to_string_lossy().as_ref())),
 					Err(err) => project.set_error(QString::from(format!("Packing failed: {err}").as_str())),
+				}
+			});
+		});
+	}
+
+	fn link_workshop_item(mut self: Pin<&mut Self>, id_or_url: &QString) -> bool {
+		let text = id_or_url.to_string();
+		let text = text.trim();
+		// Accept a bare ID or a Workshop link such as ...filedetails/?id=123456
+		let id = text.rsplit("id=").next().unwrap_or(text).split(|c: char| !c.is_ascii_digit()).next().unwrap_or("");
+		let id: Option<u64> = match (text.is_empty(), id.parse()) {
+			(true, _) => None,
+			(false, Ok(id)) => Some(id),
+			(false, Err(_)) => return false,
+		};
+		settings::set_workshop_id(&self.folder().to_string(), id);
+		self.as_mut().set_workshop_id(QString::from(id.map(|id| id.to_string()).unwrap_or_default().as_str()));
+		true
+	}
+
+	fn publish(mut self: Pin<&mut Self>, visibility: &QString, preview: &QString, change_note: &QString) {
+		if *self.publishing() {
+			return;
+		}
+		let folder = self.folder().to_string();
+		let request = workshop::PublishRequest {
+			folder: PathBuf::from(&folder),
+			addon: self.current(),
+			existing: self.workshop_id().to_string().parse().ok(),
+			preview: Some(preview.to_string()).filter(|p| !p.is_empty()).map(PathBuf::from),
+			visibility: workshop::visibility(&visibility.to_string()),
+			change_note: change_note.to_string(),
+		};
+		self.as_mut().set_error(QString::default());
+		self.as_mut().set_published_id(QString::default());
+		self.as_mut().set_needs_legal_agreement(false);
+		self.as_mut().set_publish_status(QString::from("Starting"));
+		self.as_mut().set_publish_progress(-1.0);
+		self.as_mut().set_publishing(true);
+
+		let thread = self.qt_thread();
+		std::thread::spawn(move || {
+			let status_thread = thread.clone();
+			let mut last = (String::new(), -2i64);
+			let result = workshop::publish(request, |stage, progress| {
+				// Only pass on visible changes, in 1% steps
+				let step = (progress * 100.0) as i64;
+				if last.0 != stage || last.1 != step {
+					last = (stage.to_owned(), step);
+					let stage = stage.to_owned();
+					let _ = status_thread.queue(move |mut project| {
+						project.as_mut().set_publish_status(QString::from(stage.as_str()));
+						project.set_publish_progress(progress);
+					});
+				}
+			});
+			let _ = thread.queue(move |mut project| {
+				project.as_mut().set_publishing(false);
+				project.as_mut().set_publish_status(QString::default());
+				match result {
+					Ok(published) => {
+						let id = published.id.to_string();
+						settings::set_workshop_id(&folder, Some(published.id));
+						project.as_mut().set_workshop_id(QString::from(id.as_str()));
+						project.as_mut().set_needs_legal_agreement(published.needs_legal_agreement);
+						project.set_published_id(QString::from(id.as_str()));
+					}
+					Err(err) => project.set_error(QString::from(format!("Publishing failed: {err}").as_str())),
 				}
 			});
 		});

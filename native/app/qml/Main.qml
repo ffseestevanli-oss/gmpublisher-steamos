@@ -20,6 +20,11 @@ Kirigami.ApplicationWindow {
 			start()
 			if (openAtStart !== "")
 				root.openGma(openAtStart)
+			if (openFolderAtStart !== "") {
+				addProject(openFolderAtStart)
+				root.showPage(projectsPage)
+				root.openProject(openFolderAtStart)
+			}
 		}
 	}
 
@@ -70,6 +75,11 @@ Kirigami.ApplicationWindow {
 				text: "My addons"
 				icon.name: "folder-development"
 				onTriggered: root.showPage(projectsPage)
+			},
+			Kirigami.Action {
+				text: "My Workshop"
+				icon.name: "cloud-upload"
+				onTriggered: root.showPage(myWorkshopPage)
 			},
 			Kirigami.Action {
 				text: "Open GMA…"
@@ -132,6 +142,10 @@ Kirigami.ApplicationWindow {
 	Component {
 		id: projectPage
 		ProjectPage {}
+	}
+	Component {
+		id: myWorkshopPage
+		MyWorkshopPage {}
 	}
 	Component {
 		id: aboutPage
