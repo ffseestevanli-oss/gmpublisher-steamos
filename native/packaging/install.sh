@@ -20,7 +20,11 @@ if [ "${1:-}" = "--uninstall" ]; then
 	exit 0
 fi
 
-if ! ls /usr/lib*/qt6/qml/org/kde/kirigami /usr/lib/*/qt6/qml/org/kde/kirigami >/dev/null 2>&1; then
+kirigami_found=false
+for dir in /usr/lib*/qt6/qml/org/kde/kirigami /usr/lib/*/qt6/qml/org/kde/kirigami; do
+	[ -d "$dir" ] && kirigami_found=true
+done
+if [ "$kirigami_found" = false ]; then
 	echo "Warning: Kirigami (Qt 6) wasn't found. It ships with KDE Plasma 6; on other desktops install your distro's kirigami / kf6-kirigami package." >&2
 fi
 

@@ -13,12 +13,6 @@ Kirigami.ApplicationWindow {
 	Backend {
 		id: backend
 		Component.onCompleted: start()
-		onSteamStatusChanged: console.warn("steamStatus changed:", JSON.stringify(steamStatus))
-	}
-
-	Timer {
-		interval: 5000; running: true; repeat: true
-		onTriggered: console.warn("debug:", JSON.stringify(backend.steamStatus), JSON.stringify(backend.gmodDir), backend.subscribedItems, statusLabel.width, statusLabel.height, statusLabel.visible, statusLabel.color)
 	}
 
 	pageStack.initialPage: Kirigami.ScrollablePage {
@@ -37,10 +31,9 @@ Kirigami.ApplicationWindow {
 				Layout.fillWidth: true
 
 				Controls.Label {
-					id: statusLabel
 					Kirigami.FormData.label: "Steam:"
 					text: backend.steamStatus
-					Layout.maximumWidth: Kirigami.Units.gridUnit * 20
+					Layout.fillWidth: true
 					wrapMode: Text.Wrap
 				}
 				Controls.Label {

@@ -93,7 +93,7 @@ jobs:
       - name: Launch and screenshot
         run: |
           xvfb-run -a -s "-screen 0 1280x800x24" sh -c '
-            ~/.local/bin/gmpublisher > app.log 2>&1 &
+            QT_FORCE_STDERR_LOGGING=1 ~/.local/bin/gmpublisher > app.log 2>&1 &
             APP=$!
             sleep 15; import -window root shot.png
             kill $APP || true'

@@ -6,6 +6,8 @@ pub mod qobject {
 		type QString = cxx_qt_lib::QString;
 	}
 
+	// Expose properties to QML in camelCase (steamStatus, gmodDir, ...)
+	#[auto_cxx_name]
 	extern "RustQt" {
 		#[qobject]
 		#[qml_element]
