@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Service
+MimeType=inode/directory;
+Actions=open;
+
+[Desktop Action open]
+Name=Open as Garry's Mod addon
+Icon=io.github.ffseestevanli_oss.gmpublisher
+Exec=gmpublisher %f

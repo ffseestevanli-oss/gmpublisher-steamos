@@ -8,6 +8,7 @@ const USAGE: &str = "\
 Usage:
   gmpublisher                       open the app
   gmpublisher FILE.gma              open a GMA in the app
+  gmpublisher FOLDER                open an addon folder to edit, pack or publish
   gmpublisher list FILE.gma         list the files in a GMA
   gmpublisher extract FILE.gma [DIR]
                                     extract a GMA (default: a folder next to it)
