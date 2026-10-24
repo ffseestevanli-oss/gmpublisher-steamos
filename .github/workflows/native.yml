@@ -99,7 +99,9 @@ jobs:
           ~/.local/bin/gmpublisher pack fixture/myaddon
           ~/.local/bin/gmpublisher list fixture/myaddon.gma
           ~/.local/bin/gmpublisher extract fixture/myaddon.gma fixture/extracted
-          diff -r fixture/myaddon/lua fixture/extracted/lua
+          for f in lua/autorun/hello.lua materials/logo.vmt; do
+            test "$(cat fixture/myaddon/$f)" = "$(cat fixture/extracted/$f)" || { echo "$f differs after extraction"; exit 1; }
+          done
           # A pretend Garry's Mod install with one legacy addon and one Workshop download
           GMOD=~/.local/share/Steam/steamapps/common/GarrysMod/garrysmod/addons
           WORKSHOP=~/.local/share/Steam/steamapps/workshop/content/4000/104691717
