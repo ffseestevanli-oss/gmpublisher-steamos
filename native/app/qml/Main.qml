@@ -34,7 +34,6 @@ Kirigami.ApplicationWindow {
 					Kirigami.FormData.label: "Steam:"
 					text: backend.steamStatus
 					Layout.fillWidth: true
-					color: backend.connected ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.neutralTextColor
 					wrapMode: Text.Wrap
 				}
 				Controls.Label {
