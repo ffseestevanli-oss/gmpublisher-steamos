@@ -11,8 +11,15 @@ fn main() {
 		.file("src/app.rs")
 		.qml_module(QmlModule {
 			uri: "io.github.gmpublisher",
-			rust_files: &["src/backend.rs"],
-			qml_files: &["qml/Main.qml"],
+			rust_files: &["src/backend.rs", "src/gma_view.rs", "src/project.rs"],
+			qml_files: &[
+				"qml/Main.qml",
+				"qml/InstalledPage.qml",
+				"qml/GmaPage.qml",
+				"qml/ProjectsPage.qml",
+				"qml/ProjectPage.qml",
+				"qml/AboutPage.qml",
+			],
 			..Default::default()
 		})
 		.cc_builder(|cc| {

@@ -14,6 +14,9 @@ cxx-qt-lib = { version = "0.7", features = ["qt_full"] }
 steamworks = "0.11"
 regex = "1"
 dirs = "5"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+gmpublisher-core = { path = "../core" }
 
 [build-dependencies]
 cxx-qt-build = { version = "0.7", features = ["link_qt_object_files"] }
