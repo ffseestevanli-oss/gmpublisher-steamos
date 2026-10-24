@@ -33,6 +33,7 @@ Kirigami.ApplicationWindow {
 				Controls.Label {
 					Kirigami.FormData.label: "Steam:"
 					text: backend.steamStatus
+					Layout.fillWidth: true
 					color: backend.connected ? Kirigami.Theme.positiveTextColor : Kirigami.Theme.neutralTextColor
 					wrapMode: Text.Wrap
 				}
@@ -46,6 +47,7 @@ Kirigami.ApplicationWindow {
 				}
 				Controls.Label {
 					Kirigami.FormData.label: "Garry's Mod:"
+					Layout.fillWidth: true
 					text: backend.gmodDir || "Not found yet"
 					wrapMode: Text.WrapAnywhere
 				}
