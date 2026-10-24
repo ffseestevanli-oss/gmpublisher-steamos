@@ -10,11 +10,11 @@ std::int32_t run_app()
 {
 	// QApplication (not QGuiApplication) so the KDE desktop style can use the Plasma theme
 	static int argc = 1;
-	static char arg0[] = "gmpublisher";
+	static char arg0[] = "gmpublisher-qt";
 	static char *argv[] = {arg0, nullptr};
 
 	QApplication app(argc, argv);
-	QApplication::setApplicationName(QStringLiteral("gmpublisher"));
+	QApplication::setApplicationName(QStringLiteral("gmpublisher-qt"));
 	QApplication::setOrganizationDomain(QStringLiteral("io.github.ffseestevanli_oss"));
 	QApplication::setDesktopFileName(QStringLiteral("io.github.ffseestevanli_oss.gmpublisher"));
 	QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("io.github.ffseestevanli_oss.gmpublisher")));

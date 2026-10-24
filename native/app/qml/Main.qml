@@ -7,7 +7,7 @@ import io.github.gmpublisher
 
 Kirigami.ApplicationWindow {
 	id: root
-	title: "gmpublisher"
+	title: "gmpublisher-qt"
 	width: Kirigami.Units.gridUnit * 56
 	height: Kirigami.Units.gridUnit * 38
 	minimumWidth: Kirigami.Units.gridUnit * 22
@@ -62,7 +62,7 @@ Kirigami.ApplicationWindow {
 		modal: !root.wideScreen
 		handleVisible: modal
 		width: Kirigami.Units.gridUnit * 14
-		title: "gmpublisher"
+		title: "gmpublisher-qt"
 		titleIcon: "io.github.ffseestevanli_oss.gmpublisher"
 
 		actions: [

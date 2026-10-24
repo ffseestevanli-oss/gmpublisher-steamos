@@ -7,6 +7,11 @@ license = "GPL-3.0"
 edition = "2021"
 publish = false
 
+# Installed as gmpublisher-qt so it is never confused with the old Tauri gmpublisher
+[[bin]]
+name = "gmpublisher-qt"
+path = "src/main.rs"
+
 [dependencies]
 cxx = "1"
 cxx-qt = "0.7"
