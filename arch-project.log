@@ -1,0 +1,52 @@
+qrc:/qt/qml/io/github/gmpublisher/qml/Main.qml:132:3: QML InstalledPage: Created graphical object was not placed in the graphics scene.
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+qrc:/qt/qml/io/github/gmpublisher/qml/Main.qml:140:3: QML ProjectsPage: Created graphical object was not placed in the graphics scene.
+qrc:/qt/qml/io/github/gmpublisher/qml/Main.qml:144:3: QML ProjectPage: Created graphical object was not placed in the graphics scene.
+kf.sonnet.core: Sonnet: No speller backends available!
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
+[S_API] SteamAPI_Init(): SteamAPI_IsSteamRunning() did not locate a running instance of Steam.
+dlopen failed trying to load:
+/github/home/.steam/sdk64/steamclient.so
+with error:
+/github/home/.steam/sdk64/steamclient.so: cannot open shared object file: No such file or directory
+[S_API] SteamAPI_Init(): Failed to load module '/github/home/.steam/sdk64/steamclient.so'
