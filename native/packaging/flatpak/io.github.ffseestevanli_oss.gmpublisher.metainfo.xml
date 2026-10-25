@@ -31,6 +31,6 @@
 		<mediatype>application/x-gmod-addon</mediatype>
 	</provides>
 	<releases>
-		<release version="3.0.0-alpha.0" date="2026-10-25"/>
+		<release version="1.0.0" date="2026-10-25"/>
 	</releases>
 </component>

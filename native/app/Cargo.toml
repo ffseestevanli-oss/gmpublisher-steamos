@@ -1,6 +1,6 @@
 [package]
 name = "gmpublisher"
-version = "3.0.0-alpha.0"
+version = "1.0.0"
 description = "Garry's Mod Workshop publishing utility (native Qt edition)"
 authors = ["William Venner <william@venner.io>"]
 license = "GPL-3.0"
