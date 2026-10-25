@@ -90,6 +90,8 @@ struct EditRequest {
 	#[serde(default)]
 	id: String,
 	title: Option<String>,
+	/// The title shown in the editor, sent even when unchanged, for the GMA packed from a folder.
+	gma_title: Option<String>,
 	description: Option<String>,
 	#[serde(rename = "type")]
 	addon_type: Option<String>,
@@ -122,8 +124,9 @@ impl EditRequest {
 				let mut addon = AddonJson::load(&path)
 					.map_err(|err| format!("Couldn't read addon.json: {err}"))?
 					.unwrap_or_default();
-				// The GMA gets the same details as the Workshop page
-				if let Some(title) = &self.title {
+				// The GMA gets the same details as the Workshop page, even when the folder has no
+				// addon.json (or one without a title) and the title isn't being changed
+				if let Some(title) = self.title.as_ref().or(self.gma_title.as_ref()).filter(|t| !t.trim().is_empty()) {
 					addon.title = title.trim().to_owned();
 				}
 				if let Some((addon_type, tags)) = &tags {
@@ -326,4 +329,32 @@ fn read_gma_addon(path: &Path) -> Option<AddonJson> {
 		addon.title = gma.title;
 	}
 	Some(addon)
+}
+
+#[cfg(test)]
+mod tests {
+	use super::*;
+
+	#[test]
+	fn updating_from_a_folder_without_addon_json_keeps_the_title() {
+		let folder = std::env::temp_dir().join(format!("gmpublisher-edit-test-{}", std::process::id()));
+		std::fs::create_dir_all(&folder).unwrap();
+		let request: EditRequest = serde_json::from_value(json!({
+			"id": "123",
+			"gmaTitle": "testie1",
+			"type": "tool",
+			"tags": ["fun"],
+			"content": "folder",
+			"contentPath": folder.to_string_lossy(),
+		}))
+		.unwrap();
+		let (request, _) = request.into_publish().unwrap();
+		std::fs::remove_dir_all(&folder).ok();
+
+		// The Workshop title isn't touched, but the packed GMA still has one
+		assert!(request.title.is_none());
+		let workshop::Content::Folder { addon, .. } = request.content else { panic!("expected a folder") };
+		assert_eq!(addon.title, "testie1");
+		assert!(addon.problems().is_empty());
+	}
 }
