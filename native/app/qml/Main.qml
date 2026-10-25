@@ -90,9 +90,19 @@ Kirigami.ApplicationWindow {
 		pageStack.push(component)
 	}
 
-	// A scrolling rainbow border along the top of the window
-	header: RainbowStripe {
-		width: root.width
+	// A scrolling rainbow border along the top of the window. Kirigami narrows the window header by
+	// the sidebar's width, so the header only makes room for it and the stripe itself lives in the
+	// window's overlay, which always spans the whole window.
+	header: Item {
+		implicitHeight: stripe.implicitHeight
+	}
+	RainbowStripe {
+		id: stripe
+		parent: Overlay.overlay
+		anchors.top: parent.top
+		anchors.left: parent.left
+		anchors.right: parent.right
+		z: 1000
 	}
 
 	globalDrawer: Kirigami.GlobalDrawer {
