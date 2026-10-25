@@ -101,6 +101,7 @@ Kirigami.Dialog {
 
 		const request = {
 			id: creating ? "" : item.id,
+			gmaTitle: titleField.text.trim(),
 			visibility: visibilityBox.currentValue,
 			preview: previewPath,
 			content: contentKind,
