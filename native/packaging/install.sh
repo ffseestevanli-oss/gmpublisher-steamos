@@ -67,7 +67,7 @@ sed "s|^Exec=gmpublisher-qt|Exec=$INSTALL_DIR/gmpublisher-qt|" "$HERE/gmpublishe
 chmod 755 "$SERVICE_MENU" "$FOLDER_MENU"
 refresh_caches
 
-echo "Installed. Launch gmpublisher-qt from your application menu, or run: $BIN"
+echo "Installed. Launch gmpublisher Steventechno Edition from your application menu, or run: $BIN"
 echo ".gma files now open in gmpublisher-qt. In Dolphin, right-click a .gma to extract it, or a folder to open it as an addon."
 echo "Run 'gmpublisher-qt --help' for the command-line tools."
 if [ -f "$OLD_APPIMAGE_DESKTOP" ]; then

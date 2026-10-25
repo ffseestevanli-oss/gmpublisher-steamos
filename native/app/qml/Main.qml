@@ -7,12 +7,36 @@ import io.github.gmpublisher
 
 Kirigami.ApplicationWindow {
 	id: root
-	title: "gmpublisher-qt"
+	title: "gmpublisher Steventechno Edition"
 	width: Kirigami.Units.gridUnit * 56
 	height: Kirigami.Units.gridUnit * 38
 	minimumWidth: Kirigami.Units.gridUnit * 22
 
 	property alias backend: backend
+	property alias rainbow: rainbow
+	// Which drawer entry the page stack is showing
+	property string section: "installed"
+
+	// The Rainbow Road colours, for the parts the colour scheme doesn't cover
+	QtObject {
+		id: rainbow
+		readonly property color ground: "#0f0e17"
+		readonly property color sidebar: "#17151f"
+		readonly property color card: "#1a1826"
+		readonly property color raised: "#221f30"
+		readonly property color selected: "#2a2540"
+		readonly property color border: "#3a3550"
+		readonly property color text: "#f4f2ff"
+		readonly property color muted: "#a9a4c4"
+		readonly property color onRainbow: "#0f0e17"
+		// The rainbow, plus lighter shades of its blue end that stay readable as text on the dark ground
+		readonly property var colors: ["#ff3b5c", "#ff8a00", "#ffd400", "#2ee86b", "#20c5ff", "#6a5cff", "#c34bff"]
+		readonly property var textColors: ["#ff5c77", "#ff9a2e", "#ffd400", "#2ee86b", "#20c5ff", "#8f85ff", "#d07bff"]
+
+		function color(index) {
+			return colors[((index % colors.length) + colors.length) % colors.length]
+		}
+	}
 
 	Backend {
 		id: backend
@@ -22,7 +46,7 @@ Kirigami.ApplicationWindow {
 				root.openGma(openAtStart)
 			if (openFolderAtStart !== "") {
 				addProject(openFolderAtStart)
-				root.showPage(projectsPage)
+				root.showPage(projectsPage, "projects")
 				root.openProject(openFolderAtStart)
 			}
 		}
@@ -46,40 +70,121 @@ Kirigami.ApplicationWindow {
 	function parentDir(path) {
 		return path.substring(0, path.lastIndexOf("/")) || "/"
 	}
+	// Rich text that colours each letter along the rainbow
+	function rainbowText(text) {
+		const letters = Array.from(text)
+		const last = Math.max(1, letters.length - 1)
+		return letters.map((letter, i) => letter === " " ? " "
+			: "<font color=\"" + rainbow.textColors[Math.round(i / last * (rainbow.textColors.length - 1))] + "\">"
+				+ letter.replace("&", "&amp;").replace("<", "&lt;") + "</font>").join("")
+	}
 	function openGma(path) {
 		pageStack.push(gmaPage, { path: path })
 	}
 	function openProject(folder) {
 		pageStack.push(projectPage, { folder: folder })
 	}
-	function showPage(component) {
+	function showPage(component, name) {
+		section = name
 		pageStack.clear()
 		pageStack.push(component)
 	}
 
+	// A rainbow stripe along the top of the window
+	header: Rectangle {
+		implicitHeight: Kirigami.Units.smallSpacing
+		gradient: RainbowGradient {}
+	}
+
 	globalDrawer: Kirigami.GlobalDrawer {
+		id: drawer
 		isMenu: false
 		modal: !root.wideScreen
 		handleVisible: modal
 		width: Kirigami.Units.gridUnit * 14
-		title: "gmpublisher-qt"
-		titleIcon: "io.github.ffseestevanli_oss.gmpublisher"
+
+		background: Rectangle {
+			color: rainbow.sidebar
+		}
+
+		header: ColumnLayout {
+			spacing: Kirigami.Units.largeSpacing
+
+			RowLayout {
+				Layout.topMargin: Kirigami.Units.largeSpacing * 2
+				Layout.leftMargin: Kirigami.Units.largeSpacing * 2
+				Layout.rightMargin: Kirigami.Units.largeSpacing * 2
+				spacing: Kirigami.Units.largeSpacing
+
+				Image {
+					source: "../assets/brand/gmpublisher-icon.png"
+					sourceSize.width: Kirigami.Units.gridUnit * 2.5
+					sourceSize.height: Kirigami.Units.gridUnit * 2.5
+					smooth: true
+				}
+				Kirigami.Heading {
+					Layout.fillWidth: true
+					text: "gmpublisher"
+					level: 2
+					font.weight: Font.Black
+					elide: Text.ElideRight
+				}
+			}
+
+			// The Steventechno Edition badge
+			Rectangle {
+				Layout.fillWidth: true
+				Layout.leftMargin: Kirigami.Units.largeSpacing * 2
+				Layout.rightMargin: Kirigami.Units.largeSpacing * 2
+				Layout.bottomMargin: Kirigami.Units.largeSpacing
+				implicitHeight: badge.implicitHeight + Kirigami.Units.smallSpacing * 2
+				radius: height / 2
+				color: rainbow.raised
+
+				RowLayout {
+					id: badge
+					anchors.fill: parent
+					anchors.leftMargin: Kirigami.Units.smallSpacing
+					anchors.rightMargin: Kirigami.Units.largeSpacing
+					spacing: Kirigami.Units.smallSpacing
+
+					Image {
+						source: "../assets/brand/steventechno-logo.png"
+						sourceSize.width: Kirigami.Units.gridUnit * 2
+						sourceSize.height: Kirigami.Units.gridUnit * 2
+						smooth: true
+					}
+					Controls.Label {
+						Layout.fillWidth: true
+						textFormat: Text.StyledText
+						text: root.rainbowText("STEVENTECHNO EDITION")
+						font.weight: Font.Bold
+						font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+						font.letterSpacing: 1.5
+						wrapMode: Text.Wrap
+					}
+				}
+			}
+		}
 
 		actions: [
 			Kirigami.Action {
 				text: "Installed addons"
 				icon.name: "package-x-generic"
-				onTriggered: root.showPage(installedPage)
+				checked: root.section === "installed"
+				onTriggered: root.showPage(installedPage, "installed")
 			},
 			Kirigami.Action {
 				text: "My addons"
 				icon.name: "folder-development"
-				onTriggered: root.showPage(projectsPage)
+				checked: root.section === "projects"
+				onTriggered: root.showPage(projectsPage, "projects")
 			},
 			Kirigami.Action {
 				text: "My Workshop"
 				icon.name: "cloud-upload"
-				onTriggered: root.showPage(myWorkshopPage)
+				checked: root.section === "workshop"
+				onTriggered: root.showPage(myWorkshopPage, "workshop")
 			},
 			Kirigami.Action {
 				text: "Open GMA…"
@@ -89,7 +194,8 @@ Kirigami.ApplicationWindow {
 			Kirigami.Action {
 				text: "About"
 				icon.name: "help-about"
-				onTriggered: root.showPage(aboutPage)
+				checked: root.section === "about"
+				onTriggered: root.showPage(aboutPage, "about")
 			}
 		]
 
@@ -97,24 +203,75 @@ Kirigami.ApplicationWindow {
 			Item {
 				Layout.fillHeight: true
 			},
-			Kirigami.Separator {
+			// Who's signed in to Steam
+			Rectangle {
 				Layout.fillWidth: true
+				Layout.leftMargin: Kirigami.Units.largeSpacing
+				Layout.rightMargin: Kirigami.Units.largeSpacing
+				implicitHeight: account.implicitHeight + Kirigami.Units.largeSpacing * 2
+				radius: Kirigami.Units.smallSpacing * 3
+				color: rainbow.card
+
+				RowLayout {
+					id: account
+					anchors.fill: parent
+					anchors.margins: Kirigami.Units.largeSpacing
+					spacing: Kirigami.Units.largeSpacing
+
+					Rectangle {
+						implicitWidth: Kirigami.Units.gridUnit * 1.75
+						implicitHeight: implicitWidth
+						radius: width / 2
+						gradient: Gradient {
+							orientation: Gradient.Horizontal
+							GradientStop { position: 0; color: backend.connected ? "#ff3b5c" : rainbow.border }
+							GradientStop { position: 0.5; color: backend.connected ? "#ffd400" : rainbow.border }
+							GradientStop { position: 1; color: backend.connected ? "#20c5ff" : rainbow.border }
+						}
+
+						Kirigami.Icon {
+							anchors.centerIn: parent
+							width: Kirigami.Units.iconSizes.small
+							height: width
+							visible: !backend.connected
+							source: "network-disconnect"
+						}
+					}
+					ColumnLayout {
+						Layout.fillWidth: true
+						spacing: 0
+
+						Controls.Label {
+							Layout.fillWidth: true
+							text: backend.connected ? backend.persona : "Not signed in"
+							font.weight: Font.DemiBold
+							elide: Text.ElideRight
+						}
+						Controls.Label {
+							Layout.fillWidth: true
+							text: backend.connected ? "Steam connected" : backend.steamStatus
+							color: backend.connected ? "#9fe8b8" : rainbow.muted
+							wrapMode: Text.Wrap
+							font: Kirigami.Theme.smallFont
+						}
+					}
+				}
 			},
-			RowLayout {
+			// Credit where it's due
+			Controls.Label {
 				Layout.fillWidth: true
 				Layout.margins: Kirigami.Units.largeSpacing
-				spacing: Kirigami.Units.smallSpacing
+				Layout.leftMargin: Kirigami.Units.largeSpacing * 1.5
+				wrapMode: Text.Wrap
+				color: rainbow.muted
+				font: Kirigami.Theme.smallFont
+				textFormat: Text.StyledText
+				linkColor: "#20c5ff"
+				text: "Based on <a href=\"https://github.com/WilliamVenner/gmpublisher\">gmpublisher</a> by William Venner"
+				onLinkActivated: link => Qt.openUrlExternally(link)
 
-				Kirigami.Icon {
-					source: backend.connected ? "network-connect" : "network-disconnect"
-					implicitWidth: Kirigami.Units.iconSizes.small
-					implicitHeight: Kirigami.Units.iconSizes.small
-				}
-				Controls.Label {
-					Layout.fillWidth: true
-					text: backend.connected ? backend.persona : backend.steamStatus
-					wrapMode: Text.Wrap
-					font: Kirigami.Theme.smallFont
+				HoverHandler {
+					cursorShape: parent.hoveredLink !== "" ? Qt.PointingHandCursor : Qt.ArrowCursor
 				}
 			}
 		]

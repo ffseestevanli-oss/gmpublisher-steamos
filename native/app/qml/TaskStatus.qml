@@ -15,17 +15,86 @@ ColumnLayout {
 		visible: status.task.error !== ""
 		text: status.task.error
 	}
-	Kirigami.InlineMessage {
+	// A publish walks through Steam's upload stages; show where it is
+	readonly property var steps: [
+		{ label: "Prepare", stages: ["Starting", "Packing", "Copying the GMA", "Creating the Workshop item", "Waiting for Steam", "Preparing"] },
+		{ label: "Files", stages: ["Preparing the files"] },
+		{ label: "Upload", stages: ["Uploading"] },
+		{ label: "Preview", stages: ["Uploading the preview image"] },
+		{ label: "Finish", stages: ["Finishing"] }
+	]
+	readonly property int step: steps.findIndex(s => s.stages.includes(task.status))
+	// Downloads and extractions use stages of their own
+	readonly property bool publishing: task.busy && step >= 0 && task.status !== "Starting"
+
+	Rectangle {
 		Layout.fillWidth: true
-		type: Kirigami.MessageType.Information
+		Layout.margins: Kirigami.Units.largeSpacing
 		visible: status.task.busy
-		text: status.task.status + "…"
-	}
-	Controls.ProgressBar {
-		Layout.fillWidth: true
-		visible: status.task.busy
-		indeterminate: status.task.progress < 0
-		value: Math.max(0, status.task.progress)
+		implicitHeight: busyLayout.implicitHeight + Kirigami.Units.largeSpacing * 2
+		radius: Kirigami.Units.largeSpacing
+		color: "#17151f"
+
+		ColumnLayout {
+			id: busyLayout
+			anchors.fill: parent
+			anchors.margins: Kirigami.Units.largeSpacing
+			spacing: Kirigami.Units.smallSpacing * 2
+
+			RowLayout {
+				Layout.fillWidth: true
+				visible: status.publishing
+				spacing: Kirigami.Units.smallSpacing
+
+				Repeater {
+					model: status.steps
+					delegate: RowLayout {
+						id: stepItem
+						required property var modelData
+						required property int index
+						readonly property bool done: index < status.step
+						readonly property bool current: index === status.step
+						spacing: Kirigami.Units.smallSpacing
+
+						Rectangle {
+							implicitWidth: Kirigami.Units.gridUnit
+							implicitHeight: implicitWidth
+							radius: width / 2
+							color: stepItem.done ? "#2ee86b" : stepItem.current ? "#ffd400" : "#2a2540"
+
+							Controls.Label {
+								anchors.centerIn: parent
+								text: stepItem.done ? "✓" : String(stepItem.index + 1)
+								color: stepItem.done || stepItem.current ? "#0f0e17" : "#a9a4c4"
+								font.pixelSize: Kirigami.Theme.smallFont.pixelSize
+								font.weight: Font.Bold
+							}
+						}
+						Controls.Label {
+							text: stepItem.modelData.label
+							color: stepItem.done ? "#9fe8b8" : stepItem.current ? "#f4f2ff" : "#a9a4c4"
+							font.weight: stepItem.current ? Font.Bold : Font.Normal
+						}
+						Rectangle {
+							visible: stepItem.index < status.steps.length - 1
+							implicitWidth: Kirigami.Units.gridUnit
+							implicitHeight: 2
+							color: "#3a3550"
+						}
+					}
+				}
+			}
+			Controls.Label {
+				Layout.fillWidth: true
+				text: status.task.status + "…" + (status.task.progress >= 0 ? "  " + Math.round(status.task.progress * 100) + "%" : "")
+				elide: Text.ElideRight
+			}
+			RainbowProgressBar {
+				Layout.fillWidth: true
+				indeterminate: status.task.progress < 0
+				value: Math.max(0, status.task.progress)
+			}
+		}
 	}
 	Kirigami.InlineMessage {
 		Layout.fillWidth: true

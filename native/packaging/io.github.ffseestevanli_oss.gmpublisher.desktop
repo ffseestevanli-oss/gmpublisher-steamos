@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=gmpublisher-qt
+Name=gmpublisher Steventechno Edition
 GenericName=Garry's Mod Addon Tool
 Comment=Browse, extract, pack and publish Garry's Mod addons
 Exec=gmpublisher-qt %f

@@ -24,6 +24,15 @@ fn main() {
 				"qml/ItemEditorDialog.qml",
 				"qml/DownloadDialog.qml",
 				"qml/TaskStatus.qml",
+				"qml/RainbowGradient.qml",
+				"qml/RainbowButton.qml",
+				"qml/RainbowProgressBar.qml",
+				"qml/PreviewImage.qml",
+			],
+			qrc_files: &[
+				"assets/SteventechnoRainbow.colors",
+				"assets/brand/gmpublisher-icon.png",
+				"assets/brand/steventechno-logo.png",
 			],
 			..Default::default()
 		})
