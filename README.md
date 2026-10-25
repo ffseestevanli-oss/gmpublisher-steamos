@@ -1,104 +1,152 @@
-# ⚙️ gmpublisher — SteamOS/Linux Fork
+<p align="center">
+  <img src="native/app/assets/brand/gmpublisher-rainbow.svg" width="140" alt="gmpublisher icon">
+</p>
 
-This project is a fork of [gmpublisher](https://github.com/WilliamVenner/gmpublisher), adapted with a focus on compatibility with **SteamOS and Linux**.
+<h1 align="center">gmpublisher · Steventechno Edition</h1>
 
-**All original application development and credit belong to [WilliamVenner](https://github.com/WilliamVenner) and the original contributors.** This fork is intended to make gmpublisher more accessible to SteamOS/Linux users. I do not claim authorship of the original application.
+<p align="center">
+  <b>Publish, update and unpack Garry's Mod Workshop addons on Linux.</b><br>
+  A native Qt rewrite of gmpublisher, made for SteamOS, Bazzite and KDE Plasma.
+</p>
 
-## 📦 Downloads & Installation
+<p align="center">
+  <a href="../../releases/latest"><img alt="Latest release" src="https://img.shields.io/github/v/release/ffseestevanli-oss/gmpublisher-steamos?label=download&color=8a2be2"></a>
+  <img alt="Platform" src="https://img.shields.io/badge/platform-SteamOS%20%7C%20Bazzite%20%7C%20Linux-1793d1">
+  <img alt="License" src="https://img.shields.io/badge/license-GPL--3.0-blue">
+</p>
 
-Download the available builds from this fork's **[Releases](../../releases)** page.
+<p align="center">
+  <img src="docs/screenshots/workshop-list.png" width="760" alt="The My Workshop page, listing published addons with their visibility, size, votes and last update">
+</p>
 
-For the original application, visit the [upstream gmpublisher repository](https://github.com/WilliamVenner/gmpublisher).
+---
 
-### SteamOS, Bazzite & other Linux
+## Why this exists
 
-Switch to **Desktop Mode** on the Steam Deck, open a terminal (Konsole) and run:
+The original [gmpublisher](https://github.com/WilliamVenner/gmpublisher) is a Tauri app that needs WebKitGTK, which you can't install on a read-only system like SteamOS or Bazzite. This edition is a ground-up rewrite in **Rust and Qt 6 / KDE Kirigami**. It runs on the libraries Plasma already ships, so it fits in on the Steam Deck's Desktop Mode and needs no `sudo`, no `steamos-readonly disable` and no Distrobox.
+
+## Features
+
+### My Workshop
+The app opens on **My Workshop**, a list of every addon you've published with its preview, visibility, size, votes and last update. Click an item to open it in the Steam client, or use the globe button to open it in your browser.
+
+### Create and update Workshop items
+- **New item…** packs an addon folder into a GMA and uploads it as a new Workshop item.
+- The **pencil** button on any item edits its title, type, tags, visibility, preview image and description. You can upload new files from a folder, or keep the files that are already on the Workshop and only change the details.
+- New items start out **Private**, so nothing goes public until you choose to. Updates keep the item's current visibility unless you change it.
+- Change notes, a custom preview image (PNG, JPEG or GIF up to 1 MiB), and Steam BBCode descriptions are all supported.
+- Upload progress follows each Steam stage, and if uploading to a brand-new item fails, the empty item is cleaned up for you.
+
+<p align="center">
+  <img src="docs/screenshots/workshop-new.png" width="49%" alt="The New Workshop item dialog">
+  <img src="docs/screenshots/workshop-edit.png" width="49%" alt="Editing an existing Workshop item">
+</p>
+
+### Download and extract from the Workshop
+Paste any Workshop ID or link, then save the `.gma` file or have it extracted straight into a new folder. The download button on your own items does the same. Nothing in the target folder is ever overwritten.
+
+<p align="center">
+  <img src="docs/screenshots/workshop-download.png" width="70%" alt="The Download from the Workshop dialog">
+</p>
+
+### My Addons
+Keep your addon folders in one place. Edit each addon's `addon.json` (title, type, tags, Workshop description and ignore patterns), see exactly which files will be packed, then **Pack GMA** or publish it. Each folder remembers which Workshop item it belongs to.
+
+### Installed addons and GMA files
+Browse and search the addons Garry's Mod has installed, open any `.gma`, look at its contents and extract it wherever you like.
+
+<p align="center">
+  <img src="docs/screenshots/my-addons.png" width="49%" alt="The My Addons page with an addon.json editor">
+  <img src="docs/screenshots/gma-browser.png" width="49%" alt="Browsing installed addons and a GMA's contents">
+</p>
+
+### Plays well with your desktop
+- `.gma` files open in gmpublisher-qt, and Dolphin gets right-click actions to **extract a GMA** or **open a folder as a Garry's Mod addon** (tarball install).
+- A command line for scripts and the terminal, shown below.
+
+## Download
+
+Grab the latest build from the **[Releases page](../../releases/latest)**.
+
+| File | Best for |
+| --- | --- |
+| `gmpublisher-qt-x86_64.AppImage` | **SteamOS and Bazzite (recommended).** A single file that uses your desktop's Qt 6 and Kirigami. |
+| `gmpublisher-qt-x86_64.flatpak` | If you prefer Flatpak. It brings its own KDE runtime from Flathub. |
+| `gmpublisher-qt_linux_x86_64.tar.gz` | A per-user install with a menu entry and Dolphin right-click actions. |
+
+### AppImage
+
+Switch to **Desktop Mode**, download the AppImage, then in Dolphin right-click it, choose **Properties → Permissions**, tick **Is executable** and double-click it. Or from a terminal:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/ffseestevanli-oss/gmpublisher-steamos/master/scripts/install-steamos.sh | bash
+chmod +x gmpublisher-qt-x86_64.AppImage
+./gmpublisher-qt-x86_64.AppImage
 ```
 
-This puts `gmpublisher.AppImage` in `~/Applications` and adds it to your app menu. No `sudo`, no `steamos-readonly disable`. Run the same command to update, or use `| bash -s -- --uninstall` to remove it.
+On Bazzite you can also open it with **Gear Lever** to add it to your app menu.
 
-**Manual install:** download `gmpublisher_linux_x86_64.AppImage` from the [releases page](../../releases), then:
+### Flatpak
 
 ```sh
-chmod +x gmpublisher_linux_x86_64.AppImage
-./gmpublisher_linux_x86_64.AppImage
+flatpak install --user gmpublisher-qt-x86_64.flatpak
+flatpak run io.github.ffseestevanli_oss.gmpublisher
 ```
 
-On Bazzite you can also open the AppImage with **Gear Lever** to add it to your menu.
+If Flatpak asks where to find the KDE runtime, add Flathub first:
 
-#### Things to know
+```sh
+flatpak remote-add --user --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+```
 
-- **Steam must be running** and logged in. gmpublisher talks to Steam through the Steamworks API.
-- Use it in **Desktop Mode**; it isn't designed for Game Mode.
-- If Garry's Mod isn't found automatically, set its folder in gmpublisher's settings (the folder that contains `GarrysMod/addons`).
-- **Flatpak Steam:** finding Garry's Mod works, but connecting to a sandboxed Flatpak Steam client may not. SteamOS and Bazzite use native Steam.
+> [!NOTE]
+> Talking to Steam from inside the Flatpak sandbox is the least tested part of this release. If the Flatpak keeps saying it's waiting for Steam, use the AppImage for Workshop work and please [open an issue](../../issues).
+
+### Tarball
+
+```sh
+tar -xzf gmpublisher-qt_linux_x86_64.tar.gz
+./gmpublisher-qt/install.sh
+```
+
+This installs for your user only, with no root. Run `./gmpublisher-qt/install.sh --uninstall` to remove it.
+
+## Before you start
+
+- **Steam must be running and signed in** for anything Workshop related. Browsing, packing and extracting GMA files work without it.
+- Use it in **Desktop Mode**. It isn't designed for Game Mode.
+- Outside of KDE Plasma, install your distro's Qt 6 Kirigami package (`kf6-kirigami` on Fedora, `kirigami` on Arch).
 - If the AppImage won't start with a FUSE error, run it with `--appimage-extract-and-run`.
 
-## 🐧 What this fork changes
+## Command line
 
-On SteamOS and Bazzite the system is read-only, so the WebKitGTK libraries the upstream Linux ZIP expects can't be installed. This fork:
-
-- **Ships a self-contained AppImage** with WebKitGTK and `libsteam_api.so` bundled.
-- **Finds Garry's Mod in more places:** native Steam (`~/.steam`, `~/.local/share/Steam`), Flatpak Steam, Snap Steam, and every library folder, including SD cards and external drives such as `/run/media/mmcblk0p1` on the Steam Deck.
-- **Loads `libsteam_api.so` from next to the executable**, not the current working directory, so it runs from any folder or launcher.
-- **Avoids the blank-window WebKit bug** on Wayland / NVIDIA by setting `WEBKIT_DISABLE_DMABUF_RENDERER=1` unless you've set it yourself.
-
-### Building from source
-
-The AppImage is built by [`.github/workflows/linux-appimage.yml`](.github/workflows/linux-appimage.yml) in an Ubuntu 22.04 container (Tauri 1 needs `webkit2gtk-4.0`). Every push builds one (download it from the workflow run's artifacts), and pushing a version tag (e.g. `2.12.2-steamos.1`) attaches it to a GitHub release.
-
-To build locally on an immutable distro, use a Distrobox/Toolbox Ubuntu 22.04 container:
-
-```sh
-sudo apt install build-essential curl wget file libwebkit2gtk-4.0-dev libgtk-3-dev \
-  libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf
-npm install
-LD_LIBRARY_PATH="$PWD/src-tauri/target/release" npm run tauri build -- --bundles appimage
+```text
+gmpublisher-qt                         open the app
+gmpublisher-qt FILE.gma                open a GMA in the app
+gmpublisher-qt FOLDER                  open an addon folder to edit, pack or publish
+gmpublisher-qt list FILE.gma           list the files in a GMA
+gmpublisher-qt extract FILE.gma [DIR]  extract a GMA (default: a new folder next to it)
+gmpublisher-qt pack FOLDER [OUT.gma]   pack an addon folder using its addon.json
 ```
 
-## ✨ Features
+## Building from source
 
-gmpublisher provides a comprehensive set of tools for managing Garry's Mod Workshop content:
+The rewrite lives in [`native/`](native): `native/core` handles GMA reading and writing, and `native/app` is the Qt/Kirigami app. You need Rust and the Qt 6 development packages (on Debian/Ubuntu: `qt6-base-dev qt6-declarative-dev qmake6 libgl-dev`), plus Kirigami at runtime.
 
-- **Publish and update** Garry's Mod Workshop addons.
-- **Browse, search, and extract** GMA files and installed addons.
-- **Bulk download and extract** Workshop items and collections.
-- **Animated GIF icons** for Workshop items.
-- **Addon size analyzer** with a treemap visualization to identify disk space usage.
-- **Legacy compatibility** for SteamPipe addons and older GMA formats.
-- **Offline functionality** for supported operations.
-- **Command-line interface** for terminal-based workflows.
-- No dependency on `gmad.exe` or `gmpublish.exe`.
+```sh
+cd native
+cargo test --release
+cargo build --release
+./target/release/gmpublisher-qt
+```
 
-Feature availability may depend on the build and platform.
+CI in [`.github/workflows/native.yml`](.github/workflows/native.yml) builds the AppImage, Flatpak and tarball, and smoke-tests them on Fedora and Arch. The Flatpak manifest is in [`native/packaging/flatpak`](native/packaging/flatpak).
 
-## 📚 Tutorials & Resources
+The original Tauri version of gmpublisher is still in this repository (`src-tauri/`, `app/`) for reference, but it is no longer what gets released.
 
-- [Fastest Way to Upload a Garry's Mod Addon to Workshop — DanFMN](https://youtu.be/_syLXTFXmgM)
-- [GMPublisher Guide in Russian — DarkFated](https://youtu.be/ldjHm85AnYk)
-- [Original gmpublisher source code](https://github.com/WilliamVenner/gmpublisher)
-- [Original gmpublisher releases](https://github.com/WilliamVenner/gmpublisher/releases)
+## Credits
 
-## 🛠️ Technical Details
+<img src="native/app/assets/brand/steventechno-logo.png" width="64" align="right" alt="Steventechno logo">
 
-The original application is built using:
+**gmpublisher was created by [William Venner](https://github.com/WilliamVenner), and all credit for the original goes to him and its contributors.** This edition is an independent, Linux-first rewrite based on [the original gmpublisher](https://github.com/WilliamVenner/gmpublisher), maintained by Steventechno.
 
-- **Rust** — backend
-- **Svelte** — frontend
-- **Tauri** — desktop application framework
-- **steamworks-rs** — Steamworks integration
-
-The original application is lightweight, with a reported size of approximately 10 MB.
-
-## 🙏 Credits & Attribution
-
-This project builds upon the work of the original gmpublisher developer and its contributors.
-
-- **Original project:** [WilliamVenner/gmpublisher](https://github.com/WilliamVenner/gmpublisher)
-- **Original author:** [WilliamVenner](https://github.com/WilliamVenner)
-- **License:** See the original repository's license and any applicable notices.
-
-This fork is an independent effort focused on SteamOS/Linux compatibility. Please refer to the original repository for upstream development, original documentation, and project history.
+It is released under the same [GPL-3.0 license](LICENSE).
