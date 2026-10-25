@@ -6,7 +6,8 @@ name: legacy-appimage (old Tauri app)
 
 on:
   push:
-    tags: ["*.*.*"]
+    # Only legacy-* tags, so vX.Y.Z releases of gmpublisher-qt never pick up old Tauri builds
+    tags: ["legacy-*"]
   workflow_dispatch:
 
 env:

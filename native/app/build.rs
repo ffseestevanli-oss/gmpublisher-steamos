@@ -11,7 +11,7 @@ fn main() {
 		.file("src/app.rs")
 		.qml_module(QmlModule {
 			uri: "io.github.gmpublisher",
-			rust_files: &["src/backend.rs", "src/gma_view.rs", "src/project.rs"],
+			rust_files: &["src/backend.rs", "src/gma_view.rs", "src/project.rs", "src/workshop_task.rs"],
 			qml_files: &[
 				"qml/Main.qml",
 				"qml/InstalledPage.qml",
@@ -21,6 +21,19 @@ fn main() {
 				"qml/AboutPage.qml",
 				"qml/PublishDialog.qml",
 				"qml/MyWorkshopPage.qml",
+				"qml/ItemEditorDialog.qml",
+				"qml/DownloadDialog.qml",
+				"qml/TaskStatus.qml",
+				"qml/RainbowGradient.qml",
+				"qml/RainbowButton.qml",
+				"qml/RainbowProgressBar.qml",
+				"qml/PreviewImage.qml",
+				"qml/RainbowStripe.qml",
+			],
+			qrc_files: &[
+				"assets/SteventechnoRainbow.colors",
+				"assets/brand/gmpublisher-icon.png",
+				"assets/brand/steventechno-logo.png",
 			],
 			..Default::default()
 		})

@@ -1,0 +1,48 @@
+# Flatpak build of gmpublisher-qt on KDE's runtime, which already carries Qt 6 and Kirigami.
+# Built in CI (.github/workflows/native.yml) as a single-file .flatpak bundle:
+#   flatpak-builder --user --install-deps-from=flathub --repo=repo build native/packaging/flatpak/io.github.ffseestevanli_oss.gmpublisher.yml
+#   flatpak build-bundle repo gmpublisher-qt.flatpak io.github.ffseestevanli_oss.gmpublisher
+app-id: io.github.ffseestevanli_oss.gmpublisher
+runtime: org.kde.Platform
+runtime-version: '6.9'
+sdk: org.kde.Sdk
+sdk-extensions:
+  - org.freedesktop.Sdk.Extension.rust-stable
+command: gmpublisher-qt
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  # Steam's client API talks to the running Steam over shared memory
+  - --share=ipc
+  - --device=shm
+  - --share=network
+  # Addon folders can live anywhere, and the Steam library is under home
+  - --filesystem=home
+  - --filesystem=~/.var/app/com.valvesoftware.Steam
+build-options:
+  append-path: /usr/lib/sdk/rust-stable/bin
+modules:
+  - name: gmpublisher-qt
+    buildsystem: simple
+    build-options:
+      # Crates are fetched at build time; this bundle isn't built for Flathub's offline builders
+      build-args:
+        - --share=network
+      env:
+        CARGO_HOME: /run/build/gmpublisher-qt/cargo
+    build-commands:
+      - cargo build --release --locked
+      - install -Dm755 target/release/gmpublisher-qt /app/bin/gmpublisher-qt
+      # The executable finds this next to itself
+      - install -Dm644 "$(find target/release -name libsteam_api.so | head -1)" /app/bin/libsteam_api.so
+      - install -Dm644 packaging/io.github.ffseestevanli_oss.gmpublisher.desktop /app/share/applications/io.github.ffseestevanli_oss.gmpublisher.desktop
+      - install -Dm644 packaging/io.github.ffseestevanli_oss.gmpublisher.png /app/share/icons/hicolor/128x128/apps/io.github.ffseestevanli_oss.gmpublisher.png
+      - install -Dm644 app/assets/brand/gmpublisher-rainbow.svg /app/share/icons/hicolor/scalable/apps/io.github.ffseestevanli_oss.gmpublisher.svg
+      - install -Dm644 packaging/io.github.ffseestevanli_oss.gmpublisher.mime.xml /app/share/mime/packages/io.github.ffseestevanli_oss.gmpublisher.xml
+      - install -Dm644 packaging/flatpak/io.github.ffseestevanli_oss.gmpublisher.metainfo.xml /app/share/metainfo/io.github.ffseestevanli_oss.gmpublisher.metainfo.xml
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - target

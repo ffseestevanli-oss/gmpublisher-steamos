@@ -21,6 +21,7 @@ Kirigami.Dialog {
 		previewPath = ""
 		badLink = false
 		changeNote.text = ""
+		updateDetails.checked = false
 		linkField.text = project.workshopId
 		visibilityBox.currentIndex = 0
 	}
@@ -92,6 +93,12 @@ Kirigami.Dialog {
 					onClicked: previewDialog.open()
 				}
 			}
+			Controls.CheckBox {
+				id: updateDetails
+				Kirigami.FormData.label: "Details:"
+				visible: dialog.updating
+				text: "Also replace the Workshop title and description with this folder's"
+			}
 			Controls.TextArea {
 				id: changeNote
 				Kirigami.FormData.label: "Change notes:"
@@ -108,8 +115,10 @@ Kirigami.Dialog {
 			wrapMode: Text.Wrap
 			opacity: 0.7
 			text: !dialog.updating
-				? "Creates a new Workshop item titled “" + dialog.project.title + "”. You can change the title and description on its Workshop page later."
-				: "Uploads the current files to this item. Its title and description stay as they are on the Workshop."
+				? "Creates a new Workshop item titled “" + dialog.project.title + "”. You can change its title and description later under My Workshop."
+				: updateDetails.checked
+					? "Uploads the current files to this item, with this folder's title and description."
+					: "Uploads the current files to this item. Its title and description stay as they are on the Workshop."
 		}
 	}
 
@@ -124,7 +133,7 @@ Kirigami.Dialog {
 					linkField.forceActiveFocus()
 					return
 				}
-				dialog.project.publish(visibilityBox.currentValue, dialog.previewPath, changeNote.text)
+				dialog.project.publish(visibilityBox.currentValue, dialog.previewPath, changeNote.text, dialog.updating && updateDetails.checked)
 				dialog.close()
 			}
 		},

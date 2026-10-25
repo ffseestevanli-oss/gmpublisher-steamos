@@ -187,6 +187,18 @@ impl Gma {
 		Ok(total)
 	}
 
+	/// Writes the whole archive, uncompressed, to `dest`. Turns a compressed Workshop download into
+	/// a plain `.gma` that Garry's Mod and other tools can open.
+	pub fn save_as(&self, dest: impl AsRef<Path>) -> Result<()> {
+		match &self.source {
+			Source::File(path) => {
+				fs::copy(path, dest)?;
+			}
+			Source::Memory(bytes) => fs::write(dest, &bytes[..])?,
+		}
+		Ok(())
+	}
+
 	/// Checks every file against its stored CRC32 and returns the paths that don't match.
 	pub fn verify(&self) -> Result<Vec<String>> {
 		let mut r = self.reader()?;

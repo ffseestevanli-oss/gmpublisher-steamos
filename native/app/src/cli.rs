@@ -49,10 +49,16 @@ pub fn parse() -> Launch {
 /// Never an existing folder, so extracting can't overwrite anything (such as the addon's source).
 pub fn default_extract_dir(gma: &Path) -> PathBuf {
 	let stem = gma.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "addon".into());
+	unused_path(gma.parent().unwrap_or(Path::new(".")), &stem, "")
+}
+
+/// `dir/name.ext`, or `dir/name (2).ext` and so on if that's taken. `ext` may be empty.
+pub fn unused_path(dir: &Path, name: &str, ext: &str) -> PathBuf {
+	let ext = if ext.is_empty() { String::new() } else { format!(".{ext}") };
 	(1..)
-		.map(|n| gma.with_file_name(if n == 1 { stem.clone() } else { format!("{stem} ({n})") }))
-		.find(|dir| !dir.exists())
-		.expect("some folder name is free")
+		.map(|n| dir.join(if n == 1 { format!("{name}{ext}") } else { format!("{name} ({n}){ext}") }))
+		.find(|path| !path.exists())
+		.expect("some name is free")
 }
 
 fn list(path: &Path) -> Result<(), String> {
