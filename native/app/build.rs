@@ -11,7 +11,7 @@ fn main() {
 		.file("src/app.rs")
 		.qml_module(QmlModule {
 			uri: "io.github.gmpublisher",
-			rust_files: &["src/backend.rs", "src/gma_view.rs", "src/project.rs"],
+			rust_files: &["src/backend.rs", "src/gma_view.rs", "src/project.rs", "src/workshop_task.rs"],
 			qml_files: &[
 				"qml/Main.qml",
 				"qml/InstalledPage.qml",
@@ -21,6 +21,9 @@ fn main() {
 				"qml/AboutPage.qml",
 				"qml/PublishDialog.qml",
 				"qml/MyWorkshopPage.qml",
+				"qml/ItemEditorDialog.qml",
+				"qml/DownloadDialog.qml",
+				"qml/TaskStatus.qml",
 			],
 			..Default::default()
 		})

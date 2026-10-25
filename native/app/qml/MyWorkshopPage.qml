@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import io.github.gmpublisher
 
 Kirigami.ScrollablePage {
 	id: page
@@ -20,7 +21,34 @@ Kirigami.ScrollablePage {
 		}
 	}
 
+	WorkshopTask {
+		id: task
+		// Show the new title, preview and so on once Steam has them
+		onBusyChanged: if (!busy && publishedId !== "") page.backend.refreshMyItems()
+	}
+	ItemEditorDialog {
+		id: editor
+		task: task
+	}
+	DownloadDialog {
+		id: downloader
+		task: task
+	}
+
 	actions: [
+		Kirigami.Action {
+			text: "New item…"
+			icon.name: "list-add"
+			enabled: page.backend.connected && !task.busy
+			onTriggered: editor.openFor(null)
+		},
+		Kirigami.Action {
+			text: "Download…"
+			icon.name: "download"
+			tooltip: "Download any Workshop addon by its ID or link"
+			enabled: page.backend.connected && !task.busy
+			onTriggered: downloader.openFor("", "")
+		},
 		Kirigami.Action {
 			text: "Refresh"
 			icon.name: "view-refresh"
@@ -31,6 +59,10 @@ Kirigami.ScrollablePage {
 
 	header: ColumnLayout {
 		spacing: 0
+		TaskStatus {
+			Layout.fillWidth: true
+			task: task
+		}
 		Kirigami.InlineMessage {
 			Layout.fillWidth: true
 			type: Kirigami.MessageType.Error
@@ -94,17 +126,35 @@ Kirigami.ScrollablePage {
 					}
 				}
 				Controls.ToolButton {
+					icon.name: "document-edit"
+					text: "Edit…"
+					display: Controls.AbstractButton.IconOnly
+					enabled: !task.busy
+					Controls.ToolTip.text: "Edit or update"
+					Controls.ToolTip.visible: hovered
+					onClicked: editor.openFor(item.modelData)
+				}
+				Controls.ToolButton {
+					icon.name: "download"
+					text: "Download…"
+					display: Controls.AbstractButton.IconOnly
+					enabled: !task.busy
+					Controls.ToolTip.text: "Download or extract the GMA"
+					Controls.ToolTip.visible: hovered
+					onClicked: downloader.openFor(item.modelData.id, item.modelData.title)
+				}
+				Controls.ToolButton {
 					icon.name: "internet-web-browser"
-					text: "Open in browser"
+					text: "Open in Steam"
 					display: Controls.AbstractButton.IconOnly
 					Controls.ToolTip.text: text
 					Controls.ToolTip.visible: hovered
-					onClicked: Qt.openUrlExternally("https://steamcommunity.com/sharedfiles/filedetails/?id=" + item.modelData.id)
+					// Opens the item's page inside the Steam client
+					onClicked: Qt.openUrlExternally("steam://url/CommunityFilePage/" + item.modelData.id)
 				}
 			}
 
-			// Opens the item's page inside the Steam client
-			onClicked: Qt.openUrlExternally("steam://url/CommunityFilePage/" + modelData.id)
+			onClicked: if (!task.busy) editor.openFor(modelData)
 		}
 
 		Kirigami.PlaceholderMessage {
@@ -115,7 +165,7 @@ Kirigami.ScrollablePage {
 			text: !page.backend.connected ? "Waiting for Steam" : "You haven't published any addons yet"
 			explanation: !page.backend.connected
 				? "Start Steam and sign in to see the addons you've published."
-				: "Open one of your addon folders under My addons and choose Publish to Workshop."
+				: "Choose New item to publish an addon folder or a GMA."
 		}
 	}
 }

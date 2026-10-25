@@ -59,8 +59,9 @@ pub mod qobject {
 
 		// Packs and uploads to the Workshop. visibility is public, friends, unlisted or private;
 		// an empty preview keeps the current image (or uses the default for a new item).
+		// update_details also replaces an existing item's title and description with this folder's.
 		#[qinvokable]
-		fn publish(self: Pin<&mut AddonProject>, visibility: &QString, preview: &QString, change_note: &QString);
+		fn publish(self: Pin<&mut AddonProject>, visibility: &QString, preview: &QString, change_note: &QString, update_details: bool);
 
 		// Links this folder to an existing Workshop item, from its ID or URL. Empty unlinks it.
 		#[qinvokable]
@@ -254,28 +255,29 @@ impl qobject::AddonProject {
 
 	fn link_workshop_item(mut self: Pin<&mut Self>, id_or_url: &QString) -> bool {
 		let text = id_or_url.to_string();
-		let text = text.trim();
-		// Accept a bare ID or a Workshop link such as ...filedetails/?id=123456
-		let id = text.rsplit("id=").next().unwrap_or(text).split(|c: char| !c.is_ascii_digit()).next().unwrap_or("");
-		let id: Option<u64> = match (text.is_empty(), id.parse()) {
+		let id = match (text.trim().is_empty(), workshop::parse_id(&text)) {
 			(true, _) => None,
-			(false, Ok(id)) => Some(id),
-			(false, Err(_)) => return false,
+			(false, Some(id)) => Some(id),
+			(false, None) => return false,
 		};
 		settings::set_workshop_id(&self.folder().to_string(), id);
 		self.as_mut().set_workshop_id(QString::from(id.map(|id| id.to_string()).unwrap_or_default().as_str()));
 		true
 	}
 
-	fn publish(mut self: Pin<&mut Self>, visibility: &QString, preview: &QString, change_note: &QString) {
+	fn publish(mut self: Pin<&mut Self>, visibility: &QString, preview: &QString, change_note: &QString, update_details: bool) {
 		if *self.publishing() {
 			return;
 		}
 		let folder = self.folder().to_string();
+		let addon = self.current();
+		let details = update_details || self.workshop_id().is_empty();
 		let request = workshop::PublishRequest {
-			folder: PathBuf::from(&folder),
-			addon: self.current(),
 			existing: self.workshop_id().to_string().parse().ok(),
+			title: details.then(|| addon.title.clone()),
+			description: details.then(|| addon.description.clone()),
+			tags: Some((addon.addon_type.clone(), addon.tags.clone())),
+			content: workshop::Content::Folder { folder: PathBuf::from(&folder), addon },
 			preview: Some(preview.to_string()).filter(|p| !p.is_empty()).map(PathBuf::from),
 			visibility: workshop::visibility(&visibility.to_string()),
 			change_note: change_note.to_string(),

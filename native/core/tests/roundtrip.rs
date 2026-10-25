@@ -114,4 +114,9 @@ fn opens_lzma_workshop_downloads() {
 
 	let gma = Gma::open(&bin).unwrap();
 	assert_eq!(gma.read_entry(&gma.entries[0]).unwrap(), b"print('compressed')");
+
+	// Saving a compressed download gives back the plain GMA
+	let saved = out.path().join("saved.gma");
+	gma.save_as(&saved).unwrap();
+	assert_eq!(fs::read(&saved).unwrap(), fs::read(&gma_path).unwrap());
 }

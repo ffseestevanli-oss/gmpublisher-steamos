@@ -8,6 +8,7 @@ mod project;
 mod settings;
 mod steam;
 mod workshop;
+mod workshop_task;
 
 use std::sync::OnceLock;
 
