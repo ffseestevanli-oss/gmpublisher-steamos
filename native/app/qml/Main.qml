@@ -98,7 +98,7 @@ Kirigami.ApplicationWindow {
 	}
 	RainbowStripe {
 		id: stripe
-		parent: Overlay.overlay
+		parent: Controls.Overlay.overlay
 		anchors.top: parent.top
 		anchors.left: parent.left
 		anchors.right: parent.right
