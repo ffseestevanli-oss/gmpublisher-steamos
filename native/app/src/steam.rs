@@ -27,8 +27,13 @@ pub struct SteamInfo {
 }
 
 /// Connects to the running Steam client on a background thread, retrying until Steam is up,
-/// then keeps pumping Steam callbacks for the lifetime of the app.
-pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce(SteamInfo) + Send + 'static) {
+/// then keeps pumping Steam callbacks for the lifetime of the app. `on_avatar` gets the signed-in
+/// user's avatar as an image file once Steam has it.
+pub fn connect(
+	on_waiting: impl Fn() + Send + 'static,
+	on_connected: impl FnOnce(SteamInfo) + Send + 'static,
+	on_avatar: impl FnOnce(PathBuf) + Send + 'static,
+) {
 	thread::spawn(move || {
 		let (client, single) = loop {
 			match Client::init_app(GMOD_APP_ID) {
@@ -49,11 +54,54 @@ pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce
 			subscribed_items: client.ugc().subscribed_items().len(),
 		});
 
-		loop {
+		// Steam may still be downloading the avatar, so keep asking for a while
+		let me = client.friends().get_friend(client.user().steam_id());
+		let mut on_avatar = Some(on_avatar);
+		for tick in 0u32.. {
 			single.run_callbacks();
+			if tick % 20 == 0 && tick <= 20 * 30 {
+				if let Some(rgba) = me.large_avatar() {
+					if let (Some(path), Some(on_avatar)) = (save_avatar(&rgba, 184), on_avatar.take()) {
+						on_avatar(path);
+					}
+				}
+			}
 			thread::sleep(Duration::from_millis(50));
 		}
 	});
+}
+
+/// Saves a square RGBA image from Steam as a BMP, which Qt reads without any extra plugins.
+fn save_avatar(rgba: &[u8], size: usize) -> Option<PathBuf> {
+	if rgba.len() != size * size * 4 {
+		return None;
+	}
+	let row = size * 3 + (4 - size * 3 % 4) % 4;
+	let pixels = row * size;
+	let mut bmp = Vec::with_capacity(54 + pixels);
+	bmp.extend_from_slice(b"BM");
+	bmp.extend_from_slice(&((54 + pixels) as u32).to_le_bytes());
+	bmp.extend_from_slice(&[0; 4]);
+	bmp.extend_from_slice(&54u32.to_le_bytes());
+	bmp.extend_from_slice(&40u32.to_le_bytes());
+	bmp.extend_from_slice(&(size as i32).to_le_bytes());
+	bmp.extend_from_slice(&(size as i32).to_le_bytes());
+	bmp.extend_from_slice(&1u16.to_le_bytes());
+	bmp.extend_from_slice(&24u16.to_le_bytes());
+	bmp.extend_from_slice(&[0; 24]);
+	// Rows go bottom to top, pixels as BGR
+	for y in (0..size).rev() {
+		let start = bmp.len();
+		for pixel in rgba[y * size * 4..(y + 1) * size * 4].chunks_exact(4) {
+			bmp.extend_from_slice(&[pixel[2], pixel[1], pixel[0]]);
+		}
+		bmp.resize(start + row, 0);
+	}
+
+	let path = dirs::cache_dir()?.join("gmpublisher").join("avatar.bmp");
+	fs::create_dir_all(path.parent()?).ok()?;
+	fs::write(&path, bmp).ok()?;
+	Some(path)
 }
 
 /// How the running Steam client was installed. A sandboxed Steam can only read some folders.
