@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>io.github.ffseestevanli_oss.gmpublisher</id>
+	<name>gmpublisher Steventechno Edition</name>
+	<summary>Browse, extract, pack and publish Garry's Mod addons</summary>
+	<developer id="io.github.ffseestevanli_oss">
+		<name>Steventechno, based on gmpublisher by William Venner</name>
+	</developer>
+	<metadata_license>CC0-1.0</metadata_license>
+	<project_license>GPL-3.0-only</project_license>
+	<description>
+		<p>
+			gmpublisher was created by William Venner, and all credit for it goes to him.
+			The Steventechno Edition is a Linux-first rewrite for SteamOS, Bazzite and other Linux desktops, built with Rust and KDE's Kirigami.
+		</p>
+		<p>It can:</p>
+		<ul>
+			<li>Browse your installed Garry's Mod addons and Workshop downloads</li>
+			<li>Open, preview and extract .gma files</li>
+			<li>Pack addon folders into .gma files</li>
+			<li>Publish, update and edit your Steam Workshop items</li>
+			<li>Download and extract any Workshop addon</li>
+		</ul>
+		<p>Steam must be running and signed in for the Workshop features.</p>
+	</description>
+	<launchable type="desktop-id">io.github.ffseestevanli_oss.gmpublisher.desktop</launchable>
+	<url type="homepage">https://github.com/ffseestevanli-oss/gmpublisher-steamos</url>
+	<url type="bugtracker">https://github.com/ffseestevanli-oss/gmpublisher-steamos/issues</url>
+	<content_rating type="oars-1.1"/>
+	<provides>
+		<mediatype>application/x-gmod-addon</mediatype>
+	</provides>
+	<releases>
+		<release version="3.0.0-alpha.0" date="2026-10-25"/>
+	</releases>
+</component>
