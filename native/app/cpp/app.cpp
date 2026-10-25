@@ -73,8 +73,8 @@ std::int32_t run_app()
 	QApplication::setApplicationDisplayName(QStringLiteral("gmpublisher Steventechno Edition"));
 	QApplication::setOrganizationDomain(QStringLiteral("io.github.ffseestevanli_oss"));
 	QApplication::setDesktopFileName(QStringLiteral("io.github.ffseestevanli_oss.gmpublisher"));
-	QApplication::setWindowIcon(QIcon::fromTheme(QStringLiteral("io.github.ffseestevanli_oss.gmpublisher"),
-		QIcon(QStringLiteral(":/qt/qml/io/github/gmpublisher/assets/brand/gmpublisher-icon.png"))));
+	// The bundled icon, so the AppImage has one too and an older installed icon can't win
+	QApplication::setWindowIcon(QIcon(QStringLiteral(":/qt/qml/io/github/gmpublisher/assets/brand/gmpublisher-icon.png")));
 
 	// Look like a native KDE app unless the user picked another Qt Quick style
 	if (qEnvironmentVariableIsEmpty("QT_QUICK_CONTROLS_STYLE")) {

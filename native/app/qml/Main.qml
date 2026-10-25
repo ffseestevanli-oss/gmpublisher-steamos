@@ -15,7 +15,7 @@ Kirigami.ApplicationWindow {
 	property alias backend: backend
 	property alias rainbow: rainbow
 	// Which drawer entry the page stack is showing
-	property string section: "installed"
+	property string section: "workshop"
 
 	// The Rainbow Road colours, for the parts the colour scheme doesn't cover
 	QtObject {
@@ -90,10 +90,19 @@ Kirigami.ApplicationWindow {
 		pageStack.push(component)
 	}
 
-	// A rainbow stripe along the top of the window
-	header: Rectangle {
-		implicitHeight: Kirigami.Units.smallSpacing
-		gradient: RainbowGradient {}
+	// A scrolling rainbow border along the top of the window. Kirigami narrows the window header by
+	// the sidebar's width, so the header only makes room for it and the stripe itself lives in the
+	// window's overlay, which always spans the whole window.
+	header: Item {
+		implicitHeight: stripe.implicitHeight
+	}
+	RainbowStripe {
+		id: stripe
+		parent: Controls.Overlay.overlay
+		anchors.top: parent.top
+		anchors.left: parent.left
+		anchors.right: parent.right
+		z: 1000
 	}
 
 	globalDrawer: Kirigami.GlobalDrawer {
@@ -169,27 +178,27 @@ Kirigami.ApplicationWindow {
 
 		actions: [
 			Kirigami.Action {
-				text: "Installed addons"
-				icon.name: "package-x-generic"
-				checked: root.section === "installed"
-				onTriggered: root.showPage(installedPage, "installed")
-			},
-			Kirigami.Action {
-				text: "My addons"
-				icon.name: "folder-development"
-				checked: root.section === "projects"
-				onTriggered: root.showPage(projectsPage, "projects")
-			},
-			Kirigami.Action {
 				text: "My Workshop"
 				icon.name: "cloud-upload"
 				checked: root.section === "workshop"
 				onTriggered: root.showPage(myWorkshopPage, "workshop")
 			},
 			Kirigami.Action {
+				text: "Installed addons"
+				icon.name: "package-x-generic"
+				checked: root.section === "installed"
+				onTriggered: root.showPage(installedPage, "installed")
+			},
+			Kirigami.Action {
 				text: "Open GMA…"
 				icon.name: "document-open"
 				onTriggered: openDialog.open()
+			},
+			Kirigami.Action {
+				text: "My addons"
+				icon.name: "folder-development"
+				checked: root.section === "projects"
+				onTriggered: root.showPage(projectsPage, "projects")
 			},
 			Kirigami.Action {
 				text: "About"
@@ -218,10 +227,11 @@ Kirigami.ApplicationWindow {
 					anchors.margins: Kirigami.Units.largeSpacing
 					spacing: Kirigami.Units.largeSpacing
 
+					// The Steam avatar in a rainbow frame
 					Rectangle {
-						implicitWidth: Kirigami.Units.gridUnit * 1.75
+						implicitWidth: Kirigami.Units.gridUnit * 2.25
 						implicitHeight: implicitWidth
-						radius: width / 2
+						radius: Kirigami.Units.smallSpacing
 						gradient: Gradient {
 							orientation: Gradient.Horizontal
 							GradientStop { position: 0; color: backend.connected ? "#ff3b5c" : rainbow.border }
@@ -229,6 +239,17 @@ Kirigami.ApplicationWindow {
 							GradientStop { position: 1; color: backend.connected ? "#20c5ff" : rainbow.border }
 						}
 
+						Image {
+							anchors.fill: parent
+							anchors.margins: 2
+							visible: status === Image.Ready
+							source: backend.avatarPath !== "" ? root.pathToUrl(backend.avatarPath) : ""
+							sourceSize.width: width
+							sourceSize.height: height
+							fillMode: Image.PreserveAspectCrop
+							cache: false
+							smooth: true
+						}
 						Kirigami.Icon {
 							anchors.centerIn: parent
 							width: Kirigami.Units.iconSizes.small
@@ -243,7 +264,7 @@ Kirigami.ApplicationWindow {
 
 						Controls.Label {
 							Layout.fillWidth: true
-							text: backend.connected ? backend.persona : "Not signed in"
+							text: backend.connected ? backend.personaName : "Not signed in"
 							font.weight: Font.DemiBold
 							elide: Text.ElideRight
 						}
@@ -309,6 +330,6 @@ Kirigami.ApplicationWindow {
 		AboutPage {}
 	}
 
-	pageStack.initialPage: installedPage
+	pageStack.initialPage: myWorkshopPage
 	pageStack.globalToolBar.style: Kirigami.ApplicationHeaderStyle.ToolBar
 }

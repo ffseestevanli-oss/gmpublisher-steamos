@@ -13,6 +13,9 @@ pub mod qobject {
 		#[qml_element]
 		#[qproperty(QString, steam_status)]
 		#[qproperty(QString, persona)]
+		// The signed-in user's Steam name and avatar file, for the sidebar
+		#[qproperty(QString, persona_name)]
+		#[qproperty(QString, avatar_path)]
 		#[qproperty(QString, gmod_dir)]
 		#[qproperty(i32, subscribed_items)]
 		#[qproperty(bool, connected)]
@@ -60,6 +63,8 @@ use crate::{gmod, library, settings, steam, workshop};
 pub struct BackendRust {
 	steam_status: QString,
 	persona: QString,
+	persona_name: QString,
+	avatar_path: QString,
 	gmod_dir: QString,
 	subscribed_items: i32,
 	connected: bool,
@@ -79,6 +84,8 @@ impl Default for BackendRust {
 		Self {
 			steam_status: QString::from("Connecting to Steam…"),
 			persona: QString::default(),
+			persona_name: QString::default(),
+			avatar_path: QString::default(),
 			gmod_dir: QString::from(gmod::locate().map(|p| p.display().to_string()).unwrap_or_default().as_str()),
 			subscribed_items: -1,
 			connected: false,
@@ -109,6 +116,7 @@ impl qobject::Backend {
 
 		let waiting = self.qt_thread();
 		let connected = self.qt_thread();
+		let avatar = self.qt_thread();
 		steam::connect(
 			move || {
 				let _ = waiting.queue(|backend| {
@@ -119,6 +127,7 @@ impl qobject::Backend {
 				let _ = connected.queue(move |mut backend| {
 					backend.as_mut().set_steam_status(QString::from("Connected"));
 					backend.as_mut().set_persona(QString::from(format!("{} ({})", info.persona, info.steam_id).as_str()));
+					backend.as_mut().set_persona_name(QString::from(info.persona.as_str()));
 					backend.as_mut().set_subscribed_items(info.subscribed_items as i32);
 					let found_gmod = backend.gmod_dir().is_empty() && info.gmod_dir.is_some();
 					if let Some(dir) = info.gmod_dir {
@@ -128,6 +137,11 @@ impl qobject::Backend {
 					if found_gmod {
 						backend.rescan();
 					}
+				});
+			},
+			move |path| {
+				let _ = avatar.queue(move |backend| {
+					backend.set_avatar_path(QString::from(path.display().to_string().as_str()));
 				});
 			},
 		);

@@ -28,6 +28,7 @@ fn main() {
 				"qml/RainbowButton.qml",
 				"qml/RainbowProgressBar.qml",
 				"qml/PreviewImage.qml",
+				"qml/RainbowStripe.qml",
 			],
 			qrc_files: &[
 				"assets/SteventechnoRainbow.colors",
