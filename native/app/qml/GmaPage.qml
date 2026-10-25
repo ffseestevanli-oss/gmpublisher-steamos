@@ -73,7 +73,7 @@ Kirigami.ScrollablePage {
 				}
 			]
 		}
-		Controls.ProgressBar {
+		RainbowProgressBar {
 			Layout.fillWidth: true
 			visible: doc.busy
 			indeterminate: !doc.loaded

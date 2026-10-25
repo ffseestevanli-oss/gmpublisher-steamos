@@ -1,8 +1,22 @@
-use std::{path::PathBuf, thread, time::Duration};
+use std::{
+	fs,
+	path::PathBuf,
+	sync::OnceLock,
+	thread,
+	time::Duration,
+};
 
 use steamworks::{AppId, Client};
 
 pub const GMOD_APP_ID: AppId = AppId(4000);
+
+static CLIENT: OnceLock<Client> = OnceLock::new();
+
+/// The Steam client, once connected. Its callbacks are pumped by the thread `connect` starts, so
+/// other threads can make calls and wait for the results.
+pub fn client() -> Option<Client> {
+	CLIENT.get().cloned()
+}
 
 #[derive(Debug)]
 pub struct SteamInfo {
@@ -13,8 +27,13 @@ pub struct SteamInfo {
 }
 
 /// Connects to the running Steam client on a background thread, retrying until Steam is up,
-/// then keeps pumping Steam callbacks for the lifetime of the app.
-pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce(SteamInfo) + Send + 'static) {
+/// then keeps pumping Steam callbacks for the lifetime of the app. `on_avatar` gets the signed-in
+/// user's avatar as an image file once Steam has it.
+pub fn connect(
+	on_waiting: impl Fn() + Send + 'static,
+	on_connected: impl FnOnce(SteamInfo) + Send + 'static,
+	on_avatar: impl FnOnce(PathBuf) + Send + 'static,
+) {
 	thread::spawn(move || {
 		let (client, single) = loop {
 			match Client::init_app(GMOD_APP_ID) {
@@ -26,6 +45,7 @@ pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce
 			}
 		};
 
+		let _ = CLIENT.set(client.clone());
 		let gmod_dir = PathBuf::from(client.apps().app_install_dir(GMOD_APP_ID));
 		on_connected(SteamInfo {
 			persona: client.friends().name(),
@@ -34,9 +54,89 @@ pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce
 			subscribed_items: client.ugc().subscribed_items().len(),
 		});
 
-		loop {
+		// Steam may still be downloading the avatar, so keep asking for a while
+		let me = client.friends().get_friend(client.user().steam_id());
+		let mut on_avatar = Some(on_avatar);
+		for tick in 0u32.. {
 			single.run_callbacks();
+			if tick % 20 == 0 && tick <= 20 * 30 {
+				if let Some(rgba) = me.large_avatar() {
+					if let (Some(path), Some(on_avatar)) = (save_avatar(&rgba, 184), on_avatar.take()) {
+						on_avatar(path);
+					}
+				}
+			}
 			thread::sleep(Duration::from_millis(50));
 		}
 	});
+}
+
+/// Saves a square RGBA image from Steam as a BMP, which Qt reads without any extra plugins.
+fn save_avatar(rgba: &[u8], size: usize) -> Option<PathBuf> {
+	if rgba.len() != size * size * 4 {
+		return None;
+	}
+	let row = size * 3 + (4 - size * 3 % 4) % 4;
+	let pixels = row * size;
+	let mut bmp = Vec::with_capacity(54 + pixels);
+	bmp.extend_from_slice(b"BM");
+	bmp.extend_from_slice(&((54 + pixels) as u32).to_le_bytes());
+	bmp.extend_from_slice(&[0; 4]);
+	bmp.extend_from_slice(&54u32.to_le_bytes());
+	bmp.extend_from_slice(&40u32.to_le_bytes());
+	bmp.extend_from_slice(&(size as i32).to_le_bytes());
+	bmp.extend_from_slice(&(size as i32).to_le_bytes());
+	bmp.extend_from_slice(&1u16.to_le_bytes());
+	bmp.extend_from_slice(&24u16.to_le_bytes());
+	bmp.extend_from_slice(&[0; 24]);
+	// Rows go bottom to top, pixels as BGR
+	for y in (0..size).rev() {
+		let start = bmp.len();
+		for pixel in rgba[y * size * 4..(y + 1) * size * 4].chunks_exact(4) {
+			bmp.extend_from_slice(&[pixel[2], pixel[1], pixel[0]]);
+		}
+		bmp.resize(start + row, 0);
+	}
+
+	let path = dirs::cache_dir()?.join("gmpublisher").join("avatar.bmp");
+	fs::create_dir_all(path.parent()?).ok()?;
+	fs::write(&path, bmp).ok()?;
+	Some(path)
+}
+
+/// How the running Steam client was installed. A sandboxed Steam can only read some folders.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Sandbox {
+	None,
+	Flatpak,
+	Snap,
+}
+
+pub fn sandbox() -> Sandbox {
+	let Ok(procs) = fs::read_dir("/proc") else { return Sandbox::None };
+	for proc in procs.flatten() {
+		let dir = proc.path();
+		if fs::read_to_string(dir.join("comm")).map(|c| c.trim() != "steam").unwrap_or(true) {
+			continue;
+		}
+		let cgroup = fs::read_to_string(dir.join("cgroup")).unwrap_or_default();
+		if cgroup.contains("com.valvesoftware.Steam") || dir.join("root/.flatpak-info").exists() {
+			return Sandbox::Flatpak;
+		}
+		if cgroup.contains("snap.steam") {
+			return Sandbox::Snap;
+		}
+	}
+	Sandbox::None
+}
+
+/// A folder for files Steam has to read, such as uploads, that the running Steam client can see
+/// at the same path as gmpublisher.
+pub fn shared_dir() -> PathBuf {
+	let home = dirs::home_dir().unwrap_or_else(std::env::temp_dir);
+	match sandbox() {
+		Sandbox::Flatpak => home.join(".var/app/com.valvesoftware.Steam/cache/gmpublisher"),
+		Sandbox::Snap => home.join("snap/steam/common/.cache/gmpublisher"),
+		Sandbox::None => dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("gmpublisher"),
+	}
 }

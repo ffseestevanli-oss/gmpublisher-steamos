@@ -2,8 +2,9 @@ name: build
 
 on:
   push:
+    # Only legacy-* tags, so vX.Y.Z releases of gmpublisher-qt never pick up old Tauri builds
     tags:
-      - "*.*.*"
+      - "legacy-*"
 
 env:
   CARGO_TERM_COLOR: always

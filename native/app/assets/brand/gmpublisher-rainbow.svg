@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="gmpublisher Steventechno Edition icon">
+  <defs>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff3b5c"/>
+      <stop offset="0.17" stop-color="#ff8a00"/>
+      <stop offset="0.33" stop-color="#ffd400"/>
+      <stop offset="0.5" stop-color="#2ee86b"/>
+      <stop offset="0.67" stop-color="#20c5ff"/>
+      <stop offset="0.83" stop-color="#6a5cff"/>
+      <stop offset="1" stop-color="#c34bff"/>
+    </linearGradient>
+    <linearGradient id="glyph" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0" stop-color="#ff3b5c"/>
+      <stop offset="0.2" stop-color="#ff8a00"/>
+      <stop offset="0.38" stop-color="#ffd400"/>
+      <stop offset="0.55" stop-color="#2ee86b"/>
+      <stop offset="0.72" stop-color="#20c5ff"/>
+      <stop offset="0.86" stop-color="#6a5cff"/>
+      <stop offset="1" stop-color="#c34bff"/>
+    </linearGradient>
+    <linearGradient id="ground" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#4a4a4a"/>
+      <stop offset="1" stop-color="#232323"/>
+    </linearGradient>
+    <pattern id="grid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <path d="M16 0H0V16" fill="none" stroke="#ffffff" stroke-opacity="0.08" stroke-width="1.5"/>
+    </pattern>
+    <clipPath id="inner"><circle cx="128" cy="128" r="112"/></clipPath>
+  </defs>
+
+  <!-- white rim and rainbow ring -->
+  <circle cx="128" cy="128" r="127" fill="#ffffff"/>
+  <circle cx="128" cy="128" r="123" fill="url(#rainbow)"/>
+
+  <!-- dark blueprint ground -->
+  <circle cx="128" cy="128" r="112" fill="url(#ground)"/>
+  <g clip-path="url(#inner)">
+    <rect width="256" height="256" fill="url(#grid)"/>
+  </g>
+
+  <!-- the "g": drop shadow, silver outline, rainbow body -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" transform="translate(4 5)">
+    <circle cx="124" cy="110" r="38" stroke="#000000" stroke-opacity="0.45" stroke-width="34"/>
+    <path d="M162 76V150A44 44 0 0 1 86 180" stroke="#000000" stroke-opacity="0.45" stroke-width="34"/>
+  </g>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="124" cy="110" r="38" stroke="#d6d6d6" stroke-width="34"/>
+    <path d="M162 76V150A44 44 0 0 1 86 180" stroke="#d6d6d6" stroke-width="34"/>
+    <circle cx="124" cy="110" r="38" stroke="url(#glyph)" stroke-width="24"/>
+    <path d="M162 76V150A44 44 0 0 1 86 180" stroke="url(#glyph)" stroke-width="24"/>
+  </g>
+</svg>

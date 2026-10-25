@@ -7,4 +7,4 @@ X-KDE-Submenu=Garry's Mod addon
 [Desktop Action extract]
 Name=Extract here
 Icon=archive-extract
-Exec=gmpublisher extract %f
+Exec=gmpublisher-qt extract %f

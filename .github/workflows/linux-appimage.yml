@@ -1,13 +1,13 @@
-name: linux-appimage
+name: legacy-appimage (old Tauri app)
 
-# Portable Linux build for immutable distros (SteamOS, Bazzite, Fedora Atomic, ...).
+# The original Tauri gmpublisher as an AppImage. It is superseded by gmpublisher-qt (native/) and
+# no longer builds on every push, so its artifacts can't be mistaken for the new app.
 # The AppImage bundles WebKitGTK and libsteam_api.so, so nothing has to be installed system-wide.
 
 on:
   push:
-    branches: ["**"]
-    tags: ["*.*.*"]
-  pull_request:
+    # Only legacy-* tags, so vX.Y.Z releases of gmpublisher-qt never pick up old Tauri builds
+    tags: ["legacy-*"]
   workflow_dispatch:
 
 env:

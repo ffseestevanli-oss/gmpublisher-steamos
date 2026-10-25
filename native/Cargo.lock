@@ -371,7 +371,7 @@ dependencies = [
 
 [[package]]
 name = "gmpublisher"
-version = "3.0.0-alpha.0"
+version = "1.0.0"
 dependencies = [
  "cxx",
  "cxx-qt",
@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "gmpublisher-core"
-version = "3.0.0-alpha.0"
+version = "1.0.0"
 dependencies = [
  "crc32fast",
  "lzma-rs",

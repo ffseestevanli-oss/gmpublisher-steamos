@@ -6,12 +6,13 @@ use gmpublisher_core::{pack, AddonJson, Gma};
 
 const USAGE: &str = "\
 Usage:
-  gmpublisher                       open the app
-  gmpublisher FILE.gma              open a GMA in the app
-  gmpublisher list FILE.gma         list the files in a GMA
-  gmpublisher extract FILE.gma [DIR]
-                                    extract a GMA (default: a folder next to it)
-  gmpublisher pack FOLDER [OUT.gma] pack an addon folder using its addon.json";
+  gmpublisher-qt                       open the app
+  gmpublisher-qt FILE.gma              open a GMA in the app
+  gmpublisher-qt FOLDER                open an addon folder to edit, pack or publish
+  gmpublisher-qt list FILE.gma         list the files in a GMA
+  gmpublisher-qt extract FILE.gma [DIR]
+                                       extract a GMA (default: a folder next to it)
+  gmpublisher-qt pack FOLDER [OUT.gma] pack an addon folder using its addon.json";
 
 pub enum Launch {
 	Gui { open: Option<PathBuf> },
@@ -38,7 +39,7 @@ pub fn parse() -> Launch {
 	match result {
 		Ok(()) => Launch::Exit(0),
 		Err(err) => {
-			eprintln!("gmpublisher: {err}");
+			eprintln!("gmpublisher-qt: {err}");
 			Launch::Exit(1)
 		}
 	}
@@ -48,10 +49,16 @@ pub fn parse() -> Launch {
 /// Never an existing folder, so extracting can't overwrite anything (such as the addon's source).
 pub fn default_extract_dir(gma: &Path) -> PathBuf {
 	let stem = gma.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_else(|| "addon".into());
+	unused_path(gma.parent().unwrap_or(Path::new(".")), &stem, "")
+}
+
+/// `dir/name.ext`, or `dir/name (2).ext` and so on if that's taken. `ext` may be empty.
+pub fn unused_path(dir: &Path, name: &str, ext: &str) -> PathBuf {
+	let ext = if ext.is_empty() { String::new() } else { format!(".{ext}") };
 	(1..)
-		.map(|n| gma.with_file_name(if n == 1 { stem.clone() } else { format!("{stem} ({n})") }))
-		.find(|dir| !dir.exists())
-		.expect("some folder name is free")
+		.map(|n| dir.join(if n == 1 { format!("{name}{ext}") } else { format!("{name} ({n}){ext}") }))
+		.find(|path| !path.exists())
+		.expect("some name is free")
 }
 
 fn list(path: &Path) -> Result<(), String> {

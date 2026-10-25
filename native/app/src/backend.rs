@@ -13,6 +13,9 @@ pub mod qobject {
 		#[qml_element]
 		#[qproperty(QString, steam_status)]
 		#[qproperty(QString, persona)]
+		// The signed-in user's Steam name and avatar file, for the sidebar
+		#[qproperty(QString, persona_name)]
+		#[qproperty(QString, avatar_path)]
 		#[qproperty(QString, gmod_dir)]
 		#[qproperty(i32, subscribed_items)]
 		#[qproperty(bool, connected)]
@@ -23,6 +26,11 @@ pub mod qobject {
 		#[qproperty(QString, projects_json)]
 		// A file to open as soon as the window is up, from the command line
 		#[qproperty(QString, open_at_start)]
+		#[qproperty(QString, open_folder_at_start)]
+		// JSON array of the user's published Workshop items (see workshop::MyItem)
+		#[qproperty(QString, my_items_json)]
+		#[qproperty(bool, loading_my_items)]
+		#[qproperty(QString, my_items_error)]
 		type Backend = super::BackendRust;
 
 		#[qinvokable]
@@ -36,6 +44,9 @@ pub mod qobject {
 
 		#[qinvokable]
 		fn remove_project(self: Pin<&mut Backend>, folder: &QString);
+
+		#[qinvokable]
+		fn refresh_my_items(self: Pin<&mut Backend>);
 	}
 
 	impl cxx_qt::Threading for Backend {}
@@ -47,11 +58,13 @@ use std::path::PathBuf;
 use cxx_qt::{CxxQtType, Threading};
 use cxx_qt_lib::QString;
 
-use crate::{gmod, library, settings, steam};
+use crate::{gmod, library, settings, steam, workshop};
 
 pub struct BackendRust {
 	steam_status: QString,
 	persona: QString,
+	persona_name: QString,
+	avatar_path: QString,
 	gmod_dir: QString,
 	subscribed_items: i32,
 	connected: bool,
@@ -59,6 +72,10 @@ pub struct BackendRust {
 	scanning: bool,
 	projects_json: QString,
 	open_at_start: QString,
+	open_folder_at_start: QString,
+	my_items_json: QString,
+	loading_my_items: bool,
+	my_items_error: QString,
 	started: bool,
 }
 
@@ -67,6 +84,8 @@ impl Default for BackendRust {
 		Self {
 			steam_status: QString::from("Connecting to Steam…"),
 			persona: QString::default(),
+			persona_name: QString::default(),
+			avatar_path: QString::default(),
 			gmod_dir: QString::from(gmod::locate().map(|p| p.display().to_string()).unwrap_or_default().as_str()),
 			subscribed_items: -1,
 			connected: false,
@@ -74,6 +93,10 @@ impl Default for BackendRust {
 			scanning: false,
 			projects_json: QString::from(json(&settings::projects()).as_str()),
 			open_at_start: QString::from(crate::OPEN_AT_START.get().map(String::as_str).unwrap_or_default()),
+			open_folder_at_start: QString::from(crate::OPEN_FOLDER_AT_START.get().map(String::as_str).unwrap_or_default()),
+			my_items_json: QString::from("[]"),
+			loading_my_items: false,
+			my_items_error: QString::default(),
 			started: false,
 		}
 	}
@@ -93,6 +116,7 @@ impl qobject::Backend {
 
 		let waiting = self.qt_thread();
 		let connected = self.qt_thread();
+		let avatar = self.qt_thread();
 		steam::connect(
 			move || {
 				let _ = waiting.queue(|backend| {
@@ -103,6 +127,7 @@ impl qobject::Backend {
 				let _ = connected.queue(move |mut backend| {
 					backend.as_mut().set_steam_status(QString::from("Connected"));
 					backend.as_mut().set_persona(QString::from(format!("{} ({})", info.persona, info.steam_id).as_str()));
+					backend.as_mut().set_persona_name(QString::from(info.persona.as_str()));
 					backend.as_mut().set_subscribed_items(info.subscribed_items as i32);
 					let found_gmod = backend.gmod_dir().is_empty() && info.gmod_dir.is_some();
 					if let Some(dir) = info.gmod_dir {
@@ -112,6 +137,11 @@ impl qobject::Backend {
 					if found_gmod {
 						backend.rescan();
 					}
+				});
+			},
+			move |path| {
+				let _ = avatar.queue(move |backend| {
+					backend.set_avatar_path(QString::from(path.display().to_string().as_str()));
 				});
 			},
 		);
@@ -146,6 +176,25 @@ impl qobject::Backend {
 		let folder = folder.to_string();
 		let projects = settings::projects().into_iter().filter(|p| *p != folder).collect();
 		self.save_projects(projects);
+	}
+
+	fn refresh_my_items(mut self: Pin<&mut Self>) {
+		if *self.loading_my_items() {
+			return;
+		}
+		self.as_mut().set_my_items_error(QString::default());
+		self.as_mut().set_loading_my_items(true);
+		let thread = self.qt_thread();
+		std::thread::spawn(move || {
+			let result = workshop::my_items();
+			let _ = thread.queue(move |mut backend| {
+				backend.as_mut().set_loading_my_items(false);
+				match result {
+					Ok(items) => backend.set_my_items_json(QString::from(json(&items).as_str())),
+					Err(err) => backend.set_my_items_error(QString::from(err.as_str())),
+				}
+			});
+		});
 	}
 
 	fn save_projects(self: Pin<&mut Self>, projects: Vec<String>) {

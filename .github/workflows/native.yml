@@ -1,13 +1,13 @@
-name: native
+name: gmpublisher-qt
 
-# Native Qt 6 / Kirigami edition (Rust + C++ via cxx-qt). Built against an older Qt 6 so it runs on
+# gmpublisher-qt, the Linux-first rewrite (Rust + C++ + Qt 6/Kirigami via cxx-qt). Built against an older Qt 6 so it runs on
 # the newer Qt that KDE Plasma ships on SteamOS and Bazzite, then smoke-tested on both distro families.
 
 on:
   push:
     branches: ["**"]
     paths: ["native/**", ".github/workflows/native.yml"]
-    tags: ["native-*"]
+    tags: ["v*", "native-*"]
   pull_request:
     paths: ["native/**", ".github/workflows/native.yml"]
   workflow_dispatch:
@@ -19,7 +19,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: read
     defaults:
       run:
         working-directory: native
@@ -29,7 +29,7 @@ jobs:
       - name: Install Qt 6
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq qt6-base-dev qt6-declarative-dev qmake6 libgl-dev > /dev/null
+          sudo apt-get install -y -qq qt6-base-dev qt6-declarative-dev qmake6 libgl-dev desktop-file-utils > /dev/null
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -39,25 +39,98 @@ jobs:
       - name: Build
         run: cargo build --release
 
-      - name: Package
+      - name: Package (tarball with install.sh)
         run: |
-          mkdir -p dist/gmpublisher
-          cp target/release/gmpublisher packaging/install.sh packaging/io.github.ffseestevanli_oss.gmpublisher.* packaging/gmpublisher-servicemenu.desktop dist/gmpublisher/
-          cp "$(find target/release -name libsteam_api.so | head -1)" dist/gmpublisher/
-          tar -czf gmpublisher_native_linux_x86_64.tar.gz -C dist gmpublisher
-          tar -tzvf gmpublisher_native_linux_x86_64.tar.gz
+          mkdir -p dist/gmpublisher-qt
+          cp target/release/gmpublisher-qt packaging/install.sh packaging/io.github.ffseestevanli_oss.gmpublisher.* packaging/gmpublisher-servicemenu.desktop packaging/gmpublisher-folder-servicemenu.desktop dist/gmpublisher-qt/
+          cp "$(find target/release -name libsteam_api.so | head -1)" dist/gmpublisher-qt/
+          tar -czf gmpublisher-qt_linux_x86_64.tar.gz -C dist gmpublisher-qt
+          tar -tzvf gmpublisher-qt_linux_x86_64.tar.gz
+
+      # A single-file AppImage. It deliberately bundles no Qt or graphics libraries: it runs on the
+      # Qt 6 and Kirigami that KDE Plasma already ships, which is what keeps it working on Bazzite.
+      - name: Package (AppImage)
+        run: |
+          APPDIR=dist/AppDir
+          mkdir -p $APPDIR/usr/bin
+          cp target/release/gmpublisher-qt "$(find target/release -name libsteam_api.so | head -1)" $APPDIR/usr/bin/
+          cp packaging/io.github.ffseestevanli_oss.gmpublisher.desktop packaging/io.github.ffseestevanli_oss.gmpublisher.png $APPDIR/
+          printf '#!/bin/sh\nexec "$APPDIR/usr/bin/gmpublisher-qt" "$@"\n' > $APPDIR/AppRun
+          chmod +x $APPDIR/AppRun
+          curl -fsSL -o appimagetool https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          APPIMAGE_EXTRACT_AND_RUN=1 ARCH=x86_64 ./appimagetool --no-appstream $APPDIR gmpublisher-qt-x86_64.AppImage
+          ls -l gmpublisher-qt-x86_64.AppImage
 
       - uses: actions/upload-artifact@v4
         with:
-          name: gmpublisher_native_linux_x86_64
-          path: native/gmpublisher_native_linux_x86_64.tar.gz
+          name: gmpublisher-qt-x86_64.AppImage
+          path: native/gmpublisher-qt-x86_64.AppImage
 
-      - name: Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+      - uses: actions/upload-artifact@v4
         with:
-          files: native/gmpublisher_native_linux_x86_64.tar.gz
-          prerelease: true
+          name: gmpublisher-qt_linux_x86_64.tar.gz
+          path: native/gmpublisher-qt_linux_x86_64.tar.gz
+
+  # A single-file .flatpak bundle on KDE's runtime, which brings its own Qt 6 and Kirigami
+  flatpak:
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.9
+      options: --privileged
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: gmpublisher-qt-x86_64.flatpak
+          manifest-path: native/packaging/flatpak/io.github.ffseestevanli_oss.gmpublisher.yml
+          cache-key: flatpak-builder-${{ hashFiles('native/Cargo.lock') }}
+          upload-artifact: false
+
+      - name: Install the bundle and run its command-line tools
+        run: |
+          flatpak install --user -y --noninteractive gmpublisher-qt-x86_64.flatpak
+          flatpak info --user io.github.ffseestevanli_oss.gmpublisher
+          mkdir -p ~/fixture/myaddon/lua/autorun
+          echo 'print("hello from CI")' > ~/fixture/myaddon/lua/autorun/hello.lua
+          echo '{"title":"CI Test Addon","type":"tool","tags":["fun","build"],"ignore":[]}' > ~/fixture/myaddon/addon.json
+          flatpak run --user io.github.ffseestevanli_oss.gmpublisher pack ~/fixture/myaddon
+          flatpak run --user io.github.ffseestevanli_oss.gmpublisher list ~/fixture/myaddon.gma
+          ls -l gmpublisher-qt-x86_64.flatpak
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gmpublisher-qt-x86_64.flatpak
+          path: gmpublisher-qt-x86_64.flatpak
+
+  # Tagging vX.Y.Z publishes the AppImage, Flatpak and tarball once everything above has passed
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build, smoke-test, flatpak]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gmpublisher-qt*
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: gmpublisher Steventechno Edition ${{ github.ref_name }}
+          body_path: .github/release-notes.md
+          files: |
+            dist/gmpublisher-qt-x86_64.AppImage
+            dist/gmpublisher-qt-x86_64.flatpak
+            dist/gmpublisher-qt_linux_x86_64.tar.gz
+          prerelease: ${{ contains(github.ref_name, '-') }}
           fail_on_unmatched_files: true
 
   smoke-test:
@@ -82,13 +155,18 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: gmpublisher_native_linux_x86_64
+          name: gmpublisher-qt_linux_x86_64.tar.gz
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: gmpublisher-qt-x86_64.AppImage
 
       - name: Install as a user would
         run: |
-          tar -xzf gmpublisher_native_linux_x86_64.tar.gz
-          ./gmpublisher/install.sh
-          ldd ~/.local/share/gmpublisher-native/gmpublisher | grep -E "not found|steam_api"
+          tar -xzf gmpublisher-qt_linux_x86_64.tar.gz
+          ./gmpublisher-qt/install.sh
+          ldd ~/.local/share/gmpublisher-qt/gmpublisher-qt | grep -E "not found|steam_api"
+          chmod +x gmpublisher-qt-x86_64.AppImage
 
       - name: Command-line round trip
         run: |
@@ -96,9 +174,9 @@ jobs:
           echo 'print("hello from CI")' > fixture/myaddon/lua/autorun/hello.lua
           echo '"VertexLitGeneric" {}' > fixture/myaddon/materials/logo.vmt
           echo '{"title":"CI Test Addon","type":"tool","tags":["fun","build"],"ignore":[]}' > fixture/myaddon/addon.json
-          ~/.local/bin/gmpublisher pack fixture/myaddon
-          ~/.local/bin/gmpublisher list fixture/myaddon.gma
-          ~/.local/bin/gmpublisher extract fixture/myaddon.gma fixture/extracted
+          ~/.local/bin/gmpublisher-qt pack fixture/myaddon
+          ~/.local/bin/gmpublisher-qt list fixture/myaddon.gma
+          ~/.local/bin/gmpublisher-qt extract fixture/myaddon.gma fixture/extracted
           for f in lua/autorun/hello.lua materials/logo.vmt; do
             test "$(cat fixture/myaddon/$f)" = "$(cat fixture/extracted/$f)" || { echo "$f differs after extraction"; exit 1; }
           done
@@ -115,7 +193,7 @@ jobs:
           shoot() {
             NAME=$1; shift
             xvfb-run -a -s "-screen 0 1280x800x24" sh -c '
-              QT_FORCE_STDERR_LOGGING=1 ~/.local/bin/gmpublisher "$@" > app.log 2>&1 &
+              QT_FORCE_STDERR_LOGGING=1 "$@" > app.log 2>&1 &
               APP=$!
               sleep 15; import -window root shot.png
               kill $APP || true' sh "$@"
@@ -126,12 +204,14 @@ jobs:
             cp app.log results/${{ matrix.distro }}-$NAME.log
             test "$COLOURS" -gt 50 || { echo "The $NAME window did not render"; exit 1; }
           }
-          shoot installed
-          shoot gma "$PWD/fixture/myaddon.gma"
+          # The containers have no FUSE, so the AppImage unpacks itself to run
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          shoot installed "$PWD/gmpublisher-qt-x86_64.AppImage"
+          shoot gma ~/.local/bin/gmpublisher-qt "$PWD/fixture/myaddon.gma"
+          shoot project ~/.local/bin/gmpublisher-qt "$PWD/fixture/myaddon"
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: screenshot-${{ matrix.distro }}
           path: results
-

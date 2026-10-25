@@ -1,6 +1,6 @@
 [package]
 name = "gmpublisher-core"
-version = "3.0.0-alpha.0"
+version = "1.0.0"
 description = "GMA reading, writing and extraction for gmpublisher"
 authors = ["William Venner <william@venner.io>"]
 license = "GPL-3.0"

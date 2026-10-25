@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=gmpublisher
+Name=gmpublisher Steventechno Edition
 GenericName=Garry's Mod Addon Tool
 Comment=Browse, extract, pack and publish Garry's Mod addons
-Exec=gmpublisher %f
+Exec=gmpublisher-qt %f
 Icon=io.github.ffseestevanli_oss.gmpublisher
 Type=Application
 Categories=Utility;Game;Qt;KDE;

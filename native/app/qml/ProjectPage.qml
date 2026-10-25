@@ -61,10 +61,10 @@ Kirigami.ScrollablePage {
 			onTriggered: packDialog.open()
 		},
 		Kirigami.Action {
-			text: "Publish to Workshop"
+			text: project.workshopId === "" ? "Publish to Workshop…" : "Update on Workshop…"
 			icon.name: "cloud-upload"
-			enabled: false
-			tooltip: "Coming in the next update"
+			enabled: page.canPack && !project.publishing && !project.busy
+			onTriggered: publishDialog.open()
 		},
 		Kirigami.Action {
 			text: "Open folder"
@@ -102,11 +102,48 @@ Kirigami.ScrollablePage {
 				}
 			]
 		}
-		Controls.ProgressBar {
+		RainbowProgressBar {
 			Layout.fillWidth: true
 			visible: project.busy
 			value: project.progress
 		}
+		Kirigami.InlineMessage {
+			Layout.fillWidth: true
+			type: Kirigami.MessageType.Information
+			visible: project.publishing
+			text: project.publishStatus + "…"
+		}
+		RainbowProgressBar {
+			Layout.fillWidth: true
+			visible: project.publishing
+			indeterminate: project.publishProgress < 0
+			value: Math.max(0, project.publishProgress)
+		}
+		Kirigami.InlineMessage {
+			Layout.fillWidth: true
+			type: Kirigami.MessageType.Positive
+			visible: project.publishedId !== ""
+			text: "Published to the Workshop as item " + project.publishedId + "."
+				+ (project.needsLegalAgreement ? " Steam needs you to accept the Workshop legal agreement before others can see it." : "")
+			actions: [
+				Kirigami.Action {
+					text: "Open in Steam"
+					icon.name: "internet-web-browser"
+					onTriggered: Qt.openUrlExternally("steam://url/CommunityFilePage/" + project.publishedId)
+				},
+				Kirigami.Action {
+					text: "Legal agreement"
+					icon.name: "documentinfo"
+					visible: project.needsLegalAgreement
+					onTriggered: Qt.openUrlExternally("https://steamcommunity.com/sharedfiles/workshoplegalagreement")
+				}
+			]
+		}
+	}
+
+	PublishDialog {
+		id: publishDialog
+		project: project
 	}
 
 	ColumnLayout {
@@ -149,6 +186,15 @@ Kirigami.ScrollablePage {
 						}
 					}
 				}
+			}
+			Controls.TextArea {
+				Kirigami.FormData.label: "Workshop description:"
+				Layout.fillWidth: true
+				Layout.minimumHeight: Kirigami.Units.gridUnit * 4
+				placeholderText: "Shown on the Workshop page when the addon is first published. Steam BBCode works here."
+				wrapMode: TextEdit.Wrap
+				text: project.description
+				onTextChanged: if (text !== project.description) project.description = text
 			}
 			Controls.TextArea {
 				Kirigami.FormData.label: "Ignore:"
