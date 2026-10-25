@@ -1,104 +1,59 @@
-# ⚙️ gmpublisher — SteamOS/Linux Fork
+Here's the rewrite — repositioned around the two big claims up front (completely new UI, Linux-first), with the original-author credit kept prominent:
 
-This project is a fork of [gmpublisher](https://github.com/WilliamVenner/gmpublisher), adapted with a focus on compatibility with **SteamOS and Linux**.
+```markdown
+# ⚙️ gmpublisher — Redesigned, Linux‑First
 
-**All original application development and credit belong to [WilliamVenner](https://github.com/WilliamVenner) and the original contributors.** This fork is intended to make gmpublisher more accessible to SteamOS/Linux users. I do not claim authorship of the original application.
+A from‑scratch redesign of [gmpublisher](https://github.com/WilliamVenner/gmpublisher), the Garry's Mod
+Workshop tool. This project keeps the mission of the original — publishing and managing Workshop
+content without `gmad.exe` or `gmpublish.exe` — but with a **completely new user interface** and a
+**Linux‑first** focus: built to run great on SteamOS, the Steam Deck, Bazzite, and desktop Linux.
+
+**All credit for the original gmpublisher goes to
+[WilliamVenner](https://github.com/WilliamVenner) and its contributors.** This is an independent fork
+with a rebuilt UI and a Linux‑first build pipeline; it does not claim authorship of the original
+application, and upstream development and history live in the original repository.
 
 ## 📦 Downloads & Installation
 
-Download the available builds from this fork's **[Releases](../../releases)** page.
+Grab a build from this repository's **[Releases](../../releases)** page.
+For the original application, see the [upstream repository](https://github.com/WilliamVenner/gmpublisher).
 
-For the original application, visit the [upstream gmpublisher repository](https://github.com/WilliamVenner/gmpublisher).
+### SteamOS, Bazzite & other Linux — one command
 
-### SteamOS, Bazzite & other Linux
-
-Switch to **Desktop Mode** on the Steam Deck, open a terminal (Konsole) and run:
+Switch to **Desktop Mode** on the Steam Deck, open a terminal (Konsole), and run:
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/ffseestevanli-oss/gmpublisher-steamos/master/scripts/install-steamos.sh | bash
 ```
 
-This puts `gmpublisher.AppImage` in `~/Applications` and adds it to your app menu. No `sudo`, no `steamos-readonly disable`. Run the same command to update, or use `| bash -s -- --uninstall` to remove it.
+That installs `gmpublisher.AppImage` to `~/Applications` and adds it to your app menu. No `sudo`,
+no `steamos-readonly disable`. Run the same command again to update, or add `-- --uninstall` to remove it.
 
-**Manual install:** download `gmpublisher_linux_x86_64.AppImage` from the [releases page](../../releases), then:
+**Prefer to do it by hand?** Download `gmpublisher_linux_x86_64.AppImage` from
+[Releases](../../releases) and run:
 
 ```sh
 chmod +x gmpublisher_linux_x86_64.AppImage
 ./gmpublisher_linux_x86_64.AppImage
 ```
 
-On Bazzite you can also open the AppImage with **Gear Lever** to add it to your menu.
+On Bazzite, right‑click the AppImage and open it with **Gear Lever** to add it to your menu.
 
-#### Things to know
+### Good to know
 
-- **Steam must be running** and logged in. gmpublisher talks to Steam through the Steamworks API.
+- **Steam must be running and signed in** — gmpublisher talks to Steam through the Steamworks API.
 - Use it in **Desktop Mode**; it isn't designed for Game Mode.
-- If Garry's Mod isn't found automatically, set its folder in gmpublisher's settings (the folder that contains `GarrysMod/addons`).
-- **Flatpak Steam:** finding Garry's Mod works, but connecting to a sandboxed Flatpak Steam client may not. SteamOS and Bazzite use native Steam.
-- If the AppImage won't start with a FUSE error, run it with `--appimage-extract-and-run`.
+- If Garry's Mod isn't detected, point gmpublisher at its folder in settings (the one containing `GarrysMod/addons`).
+- **Flatpak Steam:** game detection works, but connecting to a sandboxed Flatpak Steam client may not. SteamOS and Bazzite ship native Steam.
+- FUSE error on launch? Run with `--appimage-extract-and-run`.
 
-## 🐧 What this fork changes
+## 🎨 A brand-new interface
 
-On SteamOS and Bazzite the system is read-only, so the WebKitGTK libraries the upstream Linux ZIP expects can't be installed. This fork:
+The UI has been rebuilt end to end for this fork — new layout, new flows, and a look that fits the
+Steam Deck and Linux desktops. Everything gmpublisher does still lives here:
 
-- **Ships a self-contained AppImage** with WebKitGTK and `libsteam_api.so` bundled.
-- **Finds Garry's Mod in more places:** native Steam (`~/.steam`, `~/.local/share/Steam`), Flatpak Steam, Snap Steam, and every library folder, including SD cards and external drives such as `/run/media/mmcblk0p1` on the Steam Deck.
-- **Loads `libsteam_api.so` from next to the executable**, not the current working directory, so it runs from any folder or launcher.
-- **Avoids the blank-window WebKit bug** on Wayland / NVIDIA by setting `WEBKIT_DISABLE_DMABUF_RENDERER=1` unless you've set it yourself.
-
-### Building from source
-
-The AppImage is built by [`.github/workflows/linux-appimage.yml`](.github/workflows/linux-appimage.yml) in an Ubuntu 22.04 container (Tauri 1 needs `webkit2gtk-4.0`). Every push builds one (download it from the workflow run's artifacts), and pushing a version tag (e.g. `2.12.2-steamos.1`) attaches it to a GitHub release.
-
-To build locally on an immutable distro, use a Distrobox/Toolbox Ubuntu 22.04 container:
-
-```sh
-sudo apt install build-essential curl wget file libwebkit2gtk-4.0-dev libgtk-3-dev \
-  libayatana-appindicator3-dev librsvg2-dev libssl-dev patchelf
-npm install
-LD_LIBRARY_PATH="$PWD/src-tauri/target/release" npm run tauri build -- --bundles appimage
-```
-
-## ✨ Features
-
-gmpublisher provides a comprehensive set of tools for managing Garry's Mod Workshop content:
-
-- **Publish and update** Garry's Mod Workshop addons.
+- **Publish and update** Workshop addons.
 - **Browse, search, and extract** GMA files and installed addons.
 - **Bulk download and extract** Workshop items and collections.
 - **Animated GIF icons** for Workshop items.
-- **Addon size analyzer** with a treemap visualization to identify disk space usage.
-- **Legacy compatibility** for SteamPipe addons and older GMA formats.
-- **Offline functionality** for supported operations.
-- **Command-line interface** for terminal-based workflows.
-- No dependency on `gmad.exe` or `gmpublish.exe`.
-
-Feature availability may depend on the build and platform.
-
-## 📚 Tutorials & Resources
-
-- [Fastest Way to Upload a Garry's Mod Addon to Workshop — DanFMN](https://youtu.be/_syLXTFXmgM)
-- [GMPublisher Guide in Russian — DarkFated](https://youtu.be/ldjHm85AnYk)
-- [Original gmpublisher source code](https://github.com/WilliamVenner/gmpublisher)
-- [Original gmpublisher releases](https://github.com/WilliamVenner/gmpublisher/releases)
-
-## 🛠️ Technical Details
-
-The original application is built using:
-
-- **Rust** — backend
-- **Svelte** — frontend
-- **Tauri** — desktop application framework
-- **steamworks-rs** — Steamworks integration
-
-The original application is lightweight, with a reported size of approximately 10 MB.
-
-## 🙏 Credits & Attribution
-
-This project builds upon the work of the original gmpublisher developer and its contributors.
-
-- **Original project:** [WilliamVenner/gmpublisher](https://github.com/WilliamVenner/gmpublisher)
-- **Original author:** [WilliamVenner](https://github.com/WilliamVenner)
-- **License:** See the original repository's license and any applicable notices.
-
-This fork is an independent effort focused on SteamOS/Linux compatibility. Please refer to the original repository for upstream development, original documentation, and project history.
+- **Addon size analyzer** —
