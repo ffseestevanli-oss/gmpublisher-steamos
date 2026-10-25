@@ -9,22 +9,39 @@ Kirigami.ScrollablePage {
 	ColumnLayout {
 		spacing: Kirigami.Units.largeSpacing
 
-		Kirigami.Icon {
+		RowLayout {
 			Layout.alignment: Qt.AlignHCenter
-			source: "io.github.ffseestevanli_oss.gmpublisher"
-			implicitWidth: Kirigami.Units.iconSizes.huge
-			implicitHeight: Kirigami.Units.iconSizes.huge
+			spacing: Kirigami.Units.largeSpacing * 2
+
+			Image {
+				source: "../assets/brand/gmpublisher-icon.png"
+				sourceSize.width: Kirigami.Units.iconSizes.huge
+				sourceSize.height: Kirigami.Units.iconSizes.huge
+			}
+			Image {
+				source: "../assets/brand/steventechno-logo.png"
+				sourceSize.width: Kirigami.Units.iconSizes.huge
+				sourceSize.height: Kirigami.Units.iconSizes.huge
+			}
 		}
 		Kirigami.Heading {
 			Layout.alignment: Qt.AlignHCenter
-			text: "gmpublisher for Linux"
+			text: "gmpublisher"
+			font.weight: Font.Black
+		}
+		Controls.Label {
+			Layout.alignment: Qt.AlignHCenter
+			textFormat: Text.StyledText
+			text: applicationWindow().rainbowText("STEVENTECHNO EDITION")
+			font.weight: Font.Bold
+			font.letterSpacing: 2
 		}
 		Controls.Label {
 			Layout.fillWidth: true
 			horizontalAlignment: Text.AlignHCenter
 			wrapMode: Text.Wrap
 			text: "gmpublisher was created by William Venner, and all credit for it goes to him. "
-				+ "This edition is a Linux-first rewrite for SteamOS, Bazzite and other Linux desktops, "
+				+ "The Steventechno Edition is a Linux-first rewrite for SteamOS, Bazzite and other Linux desktops, "
 				+ "built with Rust and KDE's Kirigami."
 		}
 		Controls.Label {

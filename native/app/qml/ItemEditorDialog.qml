@@ -44,6 +44,7 @@ Kirigami.Dialog {
 		contentPath = ""
 		previewPath = ""
 		changeNote.text = ""
+		descriptionTabs.currentIndex = 0
 		problem = ""
 		open()
 	}
@@ -64,6 +65,26 @@ Kirigami.Dialog {
 			titleField.text = addon.title || ""
 		if (creating && descriptionField.text.trim() === "")
 			descriptionField.text = addon.description || ""
+	}
+
+	// Steam's BBCode as rich text, close enough to judge the layout before publishing
+	function bbcodeToHtml(code) {
+		let html = code.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+		const simple = { b: "b", i: "i", u: "u", strike: "s", h1: "h2", h2: "h3", h3: "h4", code: "pre", quote: "blockquote" }
+		for (const tag in simple)
+			html = html.replace(new RegExp("\\[" + tag + "\\]([\\s\\S]*?)\\[/" + tag + "\\]", "gi"), "<" + simple[tag] + ">$1</" + simple[tag] + ">")
+		html = html
+			.replace(/\[url=([^\]]+)\]([\s\S]*?)\[\/url\]/gi, "<a href=\"$1\">$2</a>")
+			.replace(/\[url\]([\s\S]*?)\[\/url\]/gi, "<a href=\"$1\">$1</a>")
+			.replace(/\[img\][\s\S]*?\[\/img\]/gi, "<i>[image]</i>")
+			.replace(/\[spoiler\]([\s\S]*?)\[\/spoiler\]/gi, "<span style=\"background-color:#3a3550\">$1</span>")
+			.replace(/\[hr\]\s*\[\/hr\]|\[hr\]/gi, "<hr>")
+			.replace(/\[(o?)list\]([\s\S]*?)\[\/\1list\]/gi, (_, ordered, items) => {
+				const tag = ordered ? "ol" : "ul"
+				return "<" + tag + ">" + items.split(/\[\*\]/).slice(1).map(item => "<li>" + item.trim() + "</li>").join("") + "</" + tag + ">"
+			})
+		// Line breaks, except the ones right next to block elements
+		return html.replace(/\n*(<\/?(?:h\d|ul|ol|li|pre|blockquote|hr)>)\n*/g, "$1").replace(/\n/g, "<br>")
 	}
 
 	function sameTags(a, b) {
@@ -215,43 +236,104 @@ Kirigami.Dialog {
 					{ text: "Public", value: "public" }
 				]
 			}
+			// What the Workshop shows now, next to the image that will replace it
 			RowLayout {
 				Kirigami.FormData.label: "Preview image:"
+				spacing: Kirigami.Units.largeSpacing
 
-				Image {
-					readonly property string current: dialog.previewPath !== "" ? applicationWindow().pathToUrl(dialog.previewPath)
-						: dialog.creating ? "" : dialog.item.previewUrl
-					visible: current !== ""
-					source: current
-					sourceSize.width: Kirigami.Units.gridUnit * 4
-					sourceSize.height: Kirigami.Units.gridUnit * 4
-					fillMode: Image.PreserveAspectFit
-					asynchronous: true
+				ColumnLayout {
+					visible: !dialog.creating
+					spacing: Kirigami.Units.smallSpacing
+
+					PreviewImage {
+						source: dialog.creating ? "" : dialog.item.previewUrl
+						dimmed: dialog.previewPath !== ""
+					}
+					Controls.Label {
+						text: "On the Workshop now"
+						color: applicationWindow().rainbow.muted
+						font: Kirigami.Theme.smallFont
+					}
 				}
-				Controls.Label {
-					visible: dialog.creating && dialog.previewPath === ""
-					text: "gmpublisher's icon"
-					opacity: 0.7
+				Kirigami.Icon {
+					visible: !dialog.creating && dialog.previewPath !== ""
+					source: "go-next"
+					implicitWidth: Kirigami.Units.iconSizes.medium
+					implicitHeight: implicitWidth
+					color: "#ffd400"
 				}
-				Controls.Button {
-					text: dialog.previewPath === "" ? "Choose…" : "Change…"
-					icon.name: "insert-image"
-					onClicked: previewDialog.open()
+				ColumnLayout {
+					visible: dialog.creating || dialog.previewPath !== ""
+					spacing: Kirigami.Units.smallSpacing
+
+					PreviewImage {
+						source: dialog.previewPath !== "" ? applicationWindow().pathToUrl(dialog.previewPath) : ""
+						highlighted: dialog.previewPath !== ""
+						placeholder: "gmpublisher's icon"
+					}
+					Controls.Label {
+						Layout.maximumWidth: Kirigami.Units.gridUnit * 8
+						text: dialog.previewPath !== "" ? dialog.previewPath.substring(dialog.previewPath.lastIndexOf("/") + 1) : "No image chosen"
+						color: applicationWindow().rainbow.muted
+						font: Kirigami.Theme.smallFont
+						elide: Text.ElideMiddle
+					}
 				}
-				Controls.Button {
-					visible: dialog.previewPath !== ""
-					text: "Undo"
-					icon.name: "edit-undo"
-					onClicked: dialog.previewPath = ""
+				ColumnLayout {
+					Layout.alignment: Qt.AlignVCenter
+					spacing: Kirigami.Units.smallSpacing
+
+					Controls.Button {
+						text: dialog.previewPath === "" ? "Choose…" : "Change…"
+						icon.name: "insert-image"
+						onClicked: previewDialog.open()
+					}
+					Controls.Button {
+						visible: dialog.previewPath !== ""
+						text: "Undo"
+						icon.name: "edit-undo"
+						onClicked: dialog.previewPath = ""
+					}
 				}
 			}
-			Controls.TextArea {
-				id: descriptionField
+			ColumnLayout {
 				Kirigami.FormData.label: "Description:"
 				Layout.fillWidth: true
-				Layout.minimumHeight: Kirigami.Units.gridUnit * 6
-				wrapMode: TextEdit.Wrap
-				placeholderText: "Shown on the Workshop page. Steam BBCode works here."
+				spacing: 0
+
+				Controls.TabBar {
+					id: descriptionTabs
+					Controls.TabButton {
+						text: "Write"
+						width: implicitWidth
+					}
+					Controls.TabButton {
+						text: "Preview"
+						width: implicitWidth
+					}
+				}
+				Controls.TextArea {
+					id: descriptionField
+					Layout.fillWidth: true
+					Layout.minimumHeight: Kirigami.Units.gridUnit * 6
+					visible: descriptionTabs.currentIndex === 0
+					wrapMode: TextEdit.Wrap
+					placeholderText: "Shown on the Workshop page. Steam BBCode works here."
+				}
+				// Roughly how Steam will show the BBCode
+				Controls.Frame {
+					Layout.fillWidth: true
+					Layout.minimumHeight: Kirigami.Units.gridUnit * 6
+					visible: descriptionTabs.currentIndex === 1
+
+					Controls.Label {
+						width: parent.width
+						textFormat: Text.RichText
+						wrapMode: Text.Wrap
+						text: descriptionField.text.trim() === "" ? "<i>Nothing to preview yet.</i>" : dialog.bbcodeToHtml(descriptionField.text)
+						onLinkActivated: link => Qt.openUrlExternally(link)
+					}
+				}
 			}
 			Controls.TextArea {
 				id: changeNote

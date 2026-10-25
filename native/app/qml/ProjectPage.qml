@@ -102,7 +102,7 @@ Kirigami.ScrollablePage {
 				}
 			]
 		}
-		Controls.ProgressBar {
+		RainbowProgressBar {
 			Layout.fillWidth: true
 			visible: project.busy
 			value: project.progress
@@ -113,7 +113,7 @@ Kirigami.ScrollablePage {
 			visible: project.publishing
 			text: project.publishStatus + "…"
 		}
-		Controls.ProgressBar {
+		RainbowProgressBar {
 			Layout.fillWidth: true
 			visible: project.publishing
 			indeterminate: project.publishProgress < 0
