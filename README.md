@@ -1,5 +1,8 @@
 🛠️ gmpublisher Steventechno Edition v1.0.0
 
+<img width="1528" height="1079" alt="Screenshot_20261025_072503" src="https://github.com/user-attachments/assets/92fb9737-2991-4d55-9876-23ab3dc808aa" />
+
+
 🚀 The first release of a Linux-first rewrite of gmpublisher, made for SteamOS, Bazzite, and other KDE Plasma desktops. Built with Rust and KDE's Kirigami.
 
 💙 **gmpublisher was created by [William Venner](https://github.com/WilliamVenner), and all credit for it goes to him.** This edition is based on [the original gmpublisher](https://github.com/WilliamVenner/gmpublisher) and is released under the same GPL-3.0 license.
