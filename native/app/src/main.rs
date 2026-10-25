@@ -4,6 +4,7 @@ mod cli;
 mod gma_view;
 mod gmod;
 mod library;
+mod log;
 mod project;
 mod settings;
 mod steam;

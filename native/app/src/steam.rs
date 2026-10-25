@@ -1,4 +1,5 @@
 use std::{
+	fs,
 	path::PathBuf,
 	sync::OnceLock,
 	thread,
@@ -53,4 +54,41 @@ pub fn connect(on_waiting: impl Fn() + Send + 'static, on_connected: impl FnOnce
 			thread::sleep(Duration::from_millis(50));
 		}
 	});
+}
+
+/// How the running Steam client was installed. A sandboxed Steam can only read some folders.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Sandbox {
+	None,
+	Flatpak,
+	Snap,
+}
+
+pub fn sandbox() -> Sandbox {
+	let Ok(procs) = fs::read_dir("/proc") else { return Sandbox::None };
+	for proc in procs.flatten() {
+		let dir = proc.path();
+		if fs::read_to_string(dir.join("comm")).map(|c| c.trim() != "steam").unwrap_or(true) {
+			continue;
+		}
+		let cgroup = fs::read_to_string(dir.join("cgroup")).unwrap_or_default();
+		if cgroup.contains("com.valvesoftware.Steam") || dir.join("root/.flatpak-info").exists() {
+			return Sandbox::Flatpak;
+		}
+		if cgroup.contains("snap.steam") {
+			return Sandbox::Snap;
+		}
+	}
+	Sandbox::None
+}
+
+/// A folder for files Steam has to read, such as uploads, that the running Steam client can see
+/// at the same path as gmpublisher.
+pub fn shared_dir() -> PathBuf {
+	let home = dirs::home_dir().unwrap_or_else(std::env::temp_dir);
+	match sandbox() {
+		Sandbox::Flatpak => home.join(".var/app/com.valvesoftware.Steam/cache/gmpublisher"),
+		Sandbox::Snap => home.join("snap/steam/common/.cache/gmpublisher"),
+		Sandbox::None => dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join("gmpublisher"),
+	}
 }

@@ -16,11 +16,16 @@ use steamworks::{
 	UserListOrder,
 };
 
-use crate::steam::{self, GMOD_APP_ID};
+use crate::{
+	gmod, log,
+	steam::{self, GMOD_APP_ID},
+};
 
 const DEFAULT_PREVIEW: &[u8] = include_bytes!("../assets/default_preview.png");
 const PREVIEW_MAX_BYTES: u64 = 1024 * 1024;
 const STEAM_TIMEOUT: Duration = Duration::from_secs(60);
+// How long an upload may sit at one step with no progress before gmpublisher stops waiting
+const UPLOAD_STALL: Duration = Duration::from_secs(180);
 // Steam's limits for Workshop titles (characters) and descriptions (bytes)
 const TITLE_MAX: usize = 128;
 const DESCRIPTION_MAX: usize = 8000;
@@ -241,8 +246,15 @@ pub fn publish(req: PublishRequest, mut status: impl FnMut(&str, f64)) -> Result
 		check_preview(preview)?;
 	}
 
-	// Steam uploads a whole folder, so the GMA goes into an empty one of its own
-	let work_dir = dirs::cache_dir().unwrap_or_else(std::env::temp_dir).join(format!("gmpublisher/publish-{}", std::process::id()));
+	// Steam uploads a whole folder, so the GMA goes into an empty one of its own, somewhere a
+	// Flatpak or Snap Steam can read it
+	let work_dir = steam::shared_dir().join(format!("publish-{}", std::process::id()));
+	log::log(&format!(
+		"Publishing to {} (Steam sandbox: {:?}, staging in {})",
+		req.existing.map(|id| id.to_string()).unwrap_or_else(|| "a new item".into()),
+		steam::sandbox(),
+		work_dir.display()
+	));
 	let _ = fs::remove_dir_all(&work_dir);
 	let content_dir = work_dir.join("content");
 	fs::create_dir_all(&content_dir).map_err(|err| format!("Couldn't create {}: {err}", content_dir.display()))?;
@@ -268,7 +280,13 @@ pub fn publish(req: PublishRequest, mut status: impl FnMut(&str, f64)) -> Result
 		};
 
 		let preview = match (&req.preview, req.existing) {
-			(Some(path), _) => Some(path.clone()),
+			// Steam reads the image itself, so give it a copy it can surely reach
+			(Some(path), _) => {
+				let ext = path.extension().and_then(|e| e.to_str()).unwrap_or("png").to_ascii_lowercase();
+				let copy = work_dir.join(format!("preview.{ext}"));
+				fs::copy(path, &copy).map_err(|err| format!("Couldn't read the preview image: {err}"))?;
+				Some(copy)
+			}
 			// New items need a preview, so use gmpublisher's icon until the user picks one
 			(None, None) => {
 				let path = work_dir.join("preview.png");
@@ -306,6 +324,7 @@ pub fn publish(req: PublishRequest, mut status: impl FnMut(&str, f64)) -> Result
 				Ok(Published { id: id.0, needs_legal_agreement })
 			}
 			Err(err) => {
+				log::log(&format!("Publishing failed: {err}"));
 				// Don't leave an empty item behind on the Workshop
 				if created {
 					client.ugc().delete_item(id, |_| {});
@@ -362,10 +381,21 @@ fn upload(client: &Client, id: PublishedFileId, changes: Changes, status: &mut i
 		let _ = tx.send(result);
 	});
 
-	let started = Instant::now();
+	log::log(&format!(
+		"Submitting item {}: files {}, title {}, description {}, tags {}, preview {}, visibility {:?}",
+		id.0,
+		changes.content.is_some(),
+		changes.title.is_some(),
+		changes.description.is_some(),
+		changes.tags.is_some(),
+		changes.preview.map(|p| p.display().to_string()).unwrap_or_else(|| "unchanged".into()),
+		changes.visibility.as_ref().map(visibility_name),
+	));
+	let mut last = (Instant::now(), None);
 	loop {
 		match rx.try_recv() {
 			Ok(result) => {
+				log::log(&format!("Steam answered: {result:?}"));
 				return result.map(|(_, legal)| legal).map_err(|err| format!("Steam rejected the upload: {err}"));
 			}
 			Err(mpsc::TryRecvError::Disconnected) => return Err("Steam dropped the upload.".into()),
@@ -381,9 +411,17 @@ fn upload(client: &Client, id: PublishedFileId, changes: Changes, status: &mut i
 			UpdateStatus::Invalid => "Waiting for Steam",
 		};
 		status(label, if total > 0 { done as f64 / total as f64 } else { -1.0 });
-		// Uploads can be large, so only give up if Steam stops reporting anything for a long time
-		if matches!(stage, UpdateStatus::Invalid) && started.elapsed() > STEAM_TIMEOUT * 10 {
-			return Err("Steam didn't finish the upload.".into());
+		// Uploads can be large, so only give up when Steam stops making progress
+		let now = Some((label, done, total));
+		if now != last.1 {
+			log::log(&format!("Steam: {label} {done}/{total}"));
+			last = (Instant::now(), now);
+		} else if last.0.elapsed() > UPLOAD_STALL {
+			return Err(format!(
+				"Steam stopped responding at “{label}”. Make sure Steam is open and signed in (not in offline mode), then try again. \
+				 Details are in {}.",
+				log::path().display()
+			));
 		}
 		thread::sleep(Duration::from_millis(200));
 	}
@@ -452,7 +490,11 @@ pub fn download(id: u64, mut status: impl FnMut(&str, f64)) -> Result<Downloaded
 	}
 
 	let info = ugc.item_install_info(file).ok_or("Steam downloaded the item but didn't say where it put it.")?;
-	let gma = installed_gma(Path::new(&info.folder)).ok_or_else(|| format!("Couldn't find the GMA Steam downloaded into {}.", info.folder))?;
+	// A sandboxed Steam reports paths as it sees them, so also look in every known Workshop folder
+	let gma = std::iter::once(PathBuf::from(&info.folder))
+		.chain(gmod::workshop_dirs().into_iter().map(|dir| dir.join(id.to_string())))
+		.find_map(|folder| installed_gma(&folder))
+		.ok_or_else(|| format!("Couldn't find the GMA Steam downloaded into {}.", info.folder))?;
 	Ok(Downloaded { title: item.title, gma })
 }
 
