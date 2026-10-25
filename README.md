@@ -1,5 +1,3 @@
-Here's the rewrite — repositioned around the two big claims up front (completely new UI, Linux-first), with the original-author credit kept prominent:
-
 ```markdown
 # ⚙️ gmpublisher — Redesigned, Linux‑First
 
