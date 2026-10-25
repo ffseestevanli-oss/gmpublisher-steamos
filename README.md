@@ -67,5 +67,3 @@ tar -xzf gmpublisher-qt_linux_x86_64.tar.gz
 ```
 ./gmpublisher-qt/install.sh --uninstall
 ```
-
-Clarify the rewrite’s relationship to gmpublisher
