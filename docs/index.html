@@ -8,7 +8,7 @@
   <meta name="theme-color" content="#16161d">
   <meta property="og:title" content="gmpublisher Steventechno Edition">
   <meta property="og:description" content="A Linux-only fork of William Venner's gmpublisher, rebuilt with Rust and KDE Kirigami for SteamOS, Bazzite and Linux desktops.">
-  <meta property="og:image" content="assets/img/workshop-list.png">
+  <meta property="og:image" content="assets/img/my-workshop.png">
   <meta property="og:type" content="website">
   <link rel="icon" type="image/png" href="assets/img/favicon.png">
   <link rel="stylesheet" href="assets/style.css">
@@ -57,10 +57,9 @@
           </div>
           <p class="fine">Version 1.0.0 · x86_64 Linux · Free and open source under GPL-3.0</p>
         </div>
-        <figure class="hero-shot window">
-          <div class="window-bar" aria-hidden="true"><span></span><span></span><span></span></div>
-          <img src="assets/img/workshop-list.png" width="1008" height="684"
-               alt="The My Workshop page, listing two published addons with their visibility, size, votes and last update date, plus edit, download and open-in-browser buttons">
+        <figure class="hero-shot shot">
+          <img src="assets/img/my-workshop.png" width="1522" height="1040"
+               alt="gmpublisher's My Workshop page in its dark theme: a grid of published Workshop addons with preview images, visibility, size, votes, last update and edit, download and open-in-browser buttons, and a sidebar showing the Steventechno Edition badge and Steam connected">
         </figure>
       </div>
     </section>
@@ -98,65 +97,49 @@
 
         <div class="feature">
           <div class="feature-copy">
+            <h3>Installed addons, at a glance</h3>
+            <p>
+              Browse and search every addon Garry's Mod has installed, with its Workshop ID, size and file count.
+              Pick one to look inside its GMA and extract it wherever you like.
+            </p>
+            <p class="muted">The sidebar shows who you're signed in as and whether Steam is connected, so you always know when Workshop features are ready.</p>
+          </div>
+          <figure class="shot">
+            <img src="assets/img/installed-addons.png" width="1522" height="1040" loading="lazy"
+                 alt="The Installed addons page in the dark theme, listing Workshop addons with their IDs, sizes and file counts, and a search box">
+          </figure>
+        </div>
+
+        <div class="fgrid">
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 19V5M5 12l7-7 7 7"/></svg></span>
             <h3>My Workshop</h3>
-            <p>
-              The app opens on a list of every addon you've published, with its visibility, size, votes and
-              last update. Click an item to open it in the Steam client, or use the globe button to open it in your browser.
-              Start something new with <strong>New item…</strong> at the top.
-            </p>
-          </div>
-          <figure class="window small">
-            <img src="assets/img/workshop-new.png" width="1008" height="684" loading="lazy"
-                 alt="The New Workshop item dialog open over the My Workshop list">
-          </figure>
-        </div>
-
-        <div class="feature flip">
-          <div class="feature-copy">
-            <h3>Create and update Workshop items</h3>
-            <ul class="ticks">
-              <li><strong>New item…</strong> packs an addon folder into a GMA and uploads it as a new Workshop item.</li>
-              <li>The <strong>pencil</strong> button edits the title, type, tags, visibility, preview image and description. Upload new files, or keep the ones already on the Workshop.</li>
-              <li>New items start out <strong>Private</strong>, so nothing goes public until you choose to.</li>
-              <li>Change notes, custom previews (PNG, JPEG or GIF up to 1&nbsp;MiB) and Steam BBCode descriptions are supported.</li>
-            </ul>
-          </div>
-          <figure class="window small">
-            <img src="assets/img/workshop-edit.png" width="1008" height="684" loading="lazy"
-                 alt="The Edit dialog for a Workshop item, with fields for files, title, type, tags, visibility, preview image, description and change notes">
-          </figure>
-        </div>
-
-        <div class="feature">
-          <div class="feature-copy">
-            <h3>Download and extract any Workshop addon</h3>
-            <p>
-              Paste a Workshop ID or link, then save the <code>.gma</code> or have it extracted straight into a new folder.
-              Nothing in the target folder is ever overwritten.
-            </p>
-          </div>
-          <figure class="window small">
-            <img src="assets/img/workshop-download.png" width="1008" height="684" loading="lazy"
-                 alt="The Download from the Workshop dialog">
-          </figure>
-        </div>
-
-        <div class="cards">
-          <article class="card">
-            <figure class="window">
-              <img src="assets/img/rewrite-gma-browser.png" width="631" height="428" loading="lazy"
-                   alt="The Installed addons page next to the contents of a selected GMA, with Extract buttons">
-            </figure>
-            <h3>Browse installed addons &amp; open GMAs</h3>
-            <p>Search the addons Garry's Mod has installed, open any <code>.gma</code>, look inside it and extract it wherever you like.</p>
+            <p>Opens on a grid of every addon you've published, with its preview, visibility, size, votes and last update. Search it, open items in Steam or your browser.</p>
           </article>
-          <article class="card">
-            <figure class="window">
-              <img src="assets/img/rewrite-addon-folder.png" width="631" height="428" loading="lazy"
-                   alt="The My addons page with an addon.json editor and a list of files that will be packed">
-            </figure>
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/></svg></span>
+            <h3>Create Workshop items</h3>
+            <p><strong>New item</strong> packs an addon folder into a GMA and uploads it. New items start out <strong>Private</strong>, so nothing goes public until you choose to.</p>
+          </article>
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg></span>
+            <h3>Edit and update</h3>
+            <p>The pencil button changes the title, type, tags, visibility, preview and BBCode description. Upload new files with change notes, or keep the ones already there.</p>
+          </article>
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></span>
+            <h3>Download and extract</h3>
+            <p>Paste any Workshop ID or link, then save the <code>.gma</code> or extract it straight into a new folder. Nothing in the target folder is ever overwritten.</p>
+          </article>
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7l8-4 8 4v10l-8 4-8-4V7zM4 7l8 4 8-4M12 11v10"/></svg></span>
             <h3>Pack folders into GMAs</h3>
-            <p>Keep your addon folders in one place, edit each <code>addon.json</code>, see exactly which files will be packed, then pack or publish.</p>
+            <p>Keep your addon folders in <strong>My addons</strong>, edit each <code>addon.json</code>, see exactly which files will be packed, then pack or publish.</p>
+          </article>
+          <article class="fcard">
+            <span class="ficon"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M6 3h8l4 4v14H6V3zM14 3v4h4M9 13h6M9 17h6"/></svg></span>
+            <h3>Open any GMA</h3>
+            <p>Open a <code>.gma</code> from anywhere, look at what's inside and extract it wherever you like. Works without Steam running.</p>
           </article>
         </div>
       </div>
